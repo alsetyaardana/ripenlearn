@@ -1,0 +1,11 @@
+# Ganti "yourdomain.com" dengan domain asli sebelum deploy ke production.
+# Caddy akan otomatis mengurus sertifikat HTTPS (Let's Encrypt) untuk domain ini.
+
+yourdomain.com {
+    reverse_proxy app:3000
+}
+
+# Untuk development lokal tanpa domain/HTTPS, comment block di atas dan pakai:
+# :80 {
+#     reverse_proxy app:3000
+# }

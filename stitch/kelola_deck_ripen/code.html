@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ripen - Deck Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@600&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary": "#ffffff",
+                      "surface-dim": "#dbdad5",
+                      "on-primary-container": "#99baa1",
+                      "surface-container": "#f0eee9",
+                      "surface-variant": "#e4e2dd",
+                      "hard-orange": "#E5A462",
+                      "outline": "#727972",
+                      "wood-warm": "#5C5346",
+                      "on-background": "#1b1c19",
+                      "secondary-fixed": "#ccebc8",
+                      "unripe-pale": "#DEE5D4",
+                      "primary-fixed": "#c8ebd0",
+                      "again-red": "#D16A5E",
+                      "on-tertiary-fixed": "#1f1b13",
+                      "primary": "#163422",
+                      "secondary-container": "#ccebc8",
+                      "surface": "#fbf9f4",
+                      "secondary": "#4a654a",
+                      "surface-bright": "#fbf9f4",
+                      "on-primary-fixed-variant": "#2f4d39",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#2d4b37",
+                      "on-tertiary-container": "#bab1a5",
+                      "surface-container-highest": "#e4e2dd",
+                      "background": "#fbf9f4",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#022110",
+                      "tertiary": "#332e25",
+                      "surface-container-high": "#eae8e3",
+                      "on-secondary-fixed": "#07200b",
+                      "easy-blue": "#6B8E9E",
+                      "primary-fixed-dim": "#adcfb4",
+                      "ripe-forest": "#1B3022",
+                      "tertiary-container": "#4a443b",
+                      "tertiary-fixed-dim": "#cfc5b9",
+                      "on-secondary-container": "#506b50",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#b0ceae",
+                      "good-green": "#8BA889",
+                      "inverse-on-surface": "#f2f1ec",
+                      "surface-container-low": "#f5f3ee",
+                      "on-tertiary-fixed-variant": "#4c463c",
+                      "tertiary-fixed": "#ebe1d4",
+                      "on-surface": "#1b1c19",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#c2c8c0",
+                      "surface-tint": "#466550",
+                      "inverse-surface": "#30312e",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#334d34",
+                      "inverse-primary": "#adcfb4",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#424843"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "xs": "4px",
+                      "unit": "4px",
+                      "reading-width": "680px",
+                      "container-max": "1120px",
+                      "sm": "8px",
+                      "xl": "48px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "pinyin-ruby": [
+                              "beVietnamPro"
+                      ],
+                      "body-md": [
+                              "beVietnamPro"
+                      ],
+                      "label-caps": [
+                              "jetbrainsMono"
+                      ],
+                      "headline-md": [
+                              "manrope"
+                      ],
+                      "body-lg": [
+                              "beVietnamPro"
+                      ],
+                      "display-lg": [
+                              "manrope"
+                      ],
+                      "headline-hanzi": [
+                              "manrope"
+                      ]
+              },
+              "fontSize": {
+                      "pinyin-ruby": [
+                              "12px",
+                              {
+                                      "lineHeight": "14px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-hanzi": [
+                              "64px",
+                              {
+                                      "lineHeight": "80px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex text-body-md">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface dark:bg-surface h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-low border-r border-unripe-pale dark:border-outline-variant flex-col h-full py-lg z-40">
+<div class="px-lg mb-xl">
+<div class="flex items-center gap-md">
+<img alt="User profile photo" class="w-12 h-12 rounded-full object-cover" data-alt="A small, stylized circular profile picture of an adult professional against a neutral background. The lighting is soft and natural, emphasizing a calm and focused demeanor suitable for a learning environment. The image is framed within a simple geometric boundary, complementing the minimalist, organic aesthetic of the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtbq3tLKf9BVb6ZjUaCbm-iVU1dxvGzGXvvN1_IOGtKzYcN2dhJXhCwEXjdJgW4v2ecsNBFCtoKLvA4XK9isWQqP9jMXE944Wn0024Jd2A7rNE_gmSxoGtDnJ_8bApEOB5bWv81JWDbmZnP3e5sm452p-QvAeWA3bJwvqBA4hK0LXVIACxEljfuc5jKJKAuKCJ0WcQRMUMVZdl5qXllceEKPST1ibV4H5LACWhiq1gwWy_Rr-ZTLPO"/>
+<div>
+<h1 class="font-display-lg text-display-lg text-primary dark:text-primary-fixed text-2xl">Ripen</h1>
+<p class="text-on-surface-variant font-body-md text-sm">Level 4 (HSK4)</p>
+</div>
+</div>
+<button class="w-full mt-lg bg-primary text-on-primary rounded py-sm font-label-caps text-label-caps transition-colors duration-200 ease-in-out hover:bg-secondary flex justify-center items-center gap-sm shadow-sm">
+<span class="material-symbols-outlined">play_arrow</span> Start Review
+            </button>
+</div>
+<ul class="flex-1 flex flex-col gap-sm">
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Review</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-primary font-bold border-r-4 border-primary dark:text-primary-fixed dark:border-primary-fixed bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">layers</span>
+<span>Decks</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span>Chat</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Reading</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">quiz</span>
+<span>Exam</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar (Mobile Top Nav - simplified for desktop focus) -->
+<header class="md:hidden flex justify-between items-center px-lg py-md w-full bg-surface/80 dark:bg-surface/80 backdrop-blur-md sticky top-0 z-50 bg-surface-container-lowest dark:bg-surface-container-lowest">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Ripen</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">search</span>
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">notifications</span>
+<img alt="User avatar" class="w-8 h-8 rounded-full object-cover" data-alt="A small, stylized circular profile picture of an adult professional against a neutral background. The lighting is soft and natural, emphasizing a calm and focused demeanor suitable for a learning environment. The image is framed within a simple geometric boundary, complementing the minimalist, organic aesthetic of the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHYofBR8E8OyeWw9OzocpO9L1TieVpXCsAea8XEMTT2MVpU7pe4OIavk9UYSjPUUuIhcADDMgsrYtUeeYoinjovkSXW64cwO4UQhZ8C9OJ4J52-5kjNwAh4ABBMO0bgAMQFuNTuET8Yu7Y5lPAoq4c4AM-nqzOr-HdbeSwv44jmnBR7QWtEefIlbJCUxArhVc_rDoKdKDIRg6_JL5j_xTqNK7CKlfbIXMfG-cUUfi0J-nOSWedTvIk"/>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 p-md md:p-lg max-w-container-max mx-auto w-full">
+<div class="flex justify-between items-center mb-xl">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary mb-xs">Deck Management</h2>
+<p class="text-on-surface-variant font-body-md text-body-md">Organize and curate your learning pathways.</p>
+</div>
+<button class="bg-primary text-on-primary px-lg py-sm rounded flex items-center gap-sm font-label-caps text-label-caps hover:bg-secondary transition-colors" onclick="document.getElementById('deck-tabs').scrollIntoView({behavior: 'smooth'})">
+<span class="material-symbols-outlined">add</span> New Deck
+                </button>
+</div>
+<!-- Tab Navigation for Views -->
+<div class="flex border-b border-unripe-pale mb-lg" id="deck-tabs">
+<button class="tab-btn px-lg py-sm font-label-caps text-label-caps text-primary border-b-2 border-primary active-tab transition-all" data-target="view-decks">My Decks</button>
+<button class="tab-btn px-lg py-sm font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all border-b-2 border-transparent" data-target="view-cards">Card Library</button>
+<button class="tab-btn px-lg py-sm font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all border-b-2 border-transparent" data-target="view-create">Create / Edit</button>
+</div>
+<!-- View: Decks List (Bento Grid Style) -->
+<section class="tab-content active" id="view-decks">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+<!-- Deck Card 1 -->
+<div class="bg-surface-container rounded-lg p-lg border border-unripe-pale hover:shadow-sm hover:border-primary-fixed-dim transition-all group flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<h3 class="font-headline-md text-xl text-primary">Core HSK 4 Vocabulary</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</div>
+<p class="text-on-surface-variant mb-lg flex-1 text-sm">The official vocabulary list required for the HSK 4 examination. Master these for daily fluency.</p>
+<div class="flex items-center justify-between mb-md">
+<span class="font-label-caps text-label-caps text-wood-warm border border-wood-warm px-sm py-xs rounded">Official HSK</span>
+<span class="text-sm font-label-caps text-label-caps text-on-surface-variant">1200 Cards</span>
+</div>
+<div class="bg-surface-container-high rounded p-md flex items-center justify-between mt-auto">
+<div>
+<span class="block font-label-caps text-label-caps text-again-red mb-xs">Due Today</span>
+<span class="font-headline-md text-2xl text-primary">45</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center group-hover:bg-secondary transition-colors">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Deck Card 2 -->
+<div class="bg-surface-container rounded-lg p-lg border border-unripe-pale hover:shadow-sm hover:border-primary-fixed-dim transition-all group flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<h3 class="font-headline-md text-xl text-primary">Business Meeting Terms</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</div>
+<p class="text-on-surface-variant mb-lg flex-1 text-sm">Custom vocabulary gathered from quarterly planning meetings and financial reports.</p>
+<div class="flex items-center justify-between mb-md">
+<span class="font-label-caps text-label-caps text-secondary border border-secondary px-sm py-xs rounded">Custom</span>
+<span class="text-sm font-label-caps text-label-caps text-on-surface-variant">84 Cards</span>
+</div>
+<div class="bg-surface-container-high rounded p-md flex items-center justify-between mt-auto">
+<div>
+<span class="block font-label-caps text-label-caps text-again-red mb-xs">Due Today</span>
+<span class="font-headline-md text-2xl text-primary">12</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center group-hover:bg-secondary transition-colors">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Deck Card 3 -->
+<div class="bg-surface-container rounded-lg p-lg border border-unripe-pale hover:shadow-sm hover:border-primary-fixed-dim transition-all group flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<h3 class="font-headline-md text-xl text-primary">Restaurant Expressions</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_vert</span></button>
+</div>
+<p class="text-on-surface-variant mb-lg flex-1 text-sm">Phrases for ordering food, asking for recommendations, and paying the bill.</p>
+<div class="flex items-center justify-between mb-md">
+<span class="font-label-caps text-label-caps text-secondary border border-secondary px-sm py-xs rounded">Custom</span>
+<span class="text-sm font-label-caps text-label-caps text-on-surface-variant">32 Cards</span>
+</div>
+<div class="bg-surface-container-high rounded p-md flex items-center justify-between mt-auto">
+<div>
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">Due Today</span>
+<span class="font-headline-md text-2xl text-primary">0</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center cursor-not-allowed">
+<span class="material-symbols-outlined">done</span>
+</button>
+</div>
+</div>
+<!-- Add New Deck CTA Card -->
+<div class="bg-surface-container-low rounded-lg p-lg border border-dashed border-outline-variant hover:border-primary hover:bg-surface-container transition-all cursor-pointer flex flex-col items-center justify-center min-h-[250px]" onclick="document.querySelector('[data-target=\'view-create\']').click()">
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center mb-md text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<h3 class="font-headline-md text-lg text-primary text-center">Create New Deck</h3>
+<p class="text-sm text-on-surface-variant text-center mt-sm">Start a new learning pathway</p>
+</div>
+</div>
+</section>
+<!-- View: Card Library (Mixed Official/Custom with Filters) -->
+<section class="tab-content" id="view-cards">
+<!-- Filters UI -->
+<div class="bg-surface-container-low p-md rounded-lg mb-lg border border-unripe-pale flex flex-col md:flex-row gap-md items-end">
+<div class="flex-1 w-full">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-sm">Search Cards</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-xl pr-md py-sm bg-surface border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="Search Hanzi, Pinyin, or English..." type="text"/>
+</div>
+</div>
+<div class="w-full md:w-auto">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-sm">HSK Level</label>
+<select class="w-full md:w-48 px-md py-sm bg-surface border border-outline-variant rounded focus:border-primary outline-none font-body-md text-body-md text-on-surface">
+<option>All Levels</option>
+<option>HSK 1</option>
+<option>HSK 2</option>
+<option>HSK 3</option>
+<option>HSK 4</option>
+<option>Custom Only</option>
+</select>
+</div>
+<div class="w-full md:w-auto">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-sm">Topic</label>
+<select class="w-full md:w-48 px-md py-sm bg-surface border border-outline-variant rounded focus:border-primary outline-none font-body-md text-body-md text-on-surface">
+<option>All Topics</option>
+<option>Business</option>
+<option>Travel</option>
+<option>Food</option>
+</select>
+</div>
+</div>
+<!-- Card List -->
+<div class="space-y-sm">
+<!-- Card Item 1 (Official) -->
+<div class="bg-surface-container rounded p-md flex flex-col md:flex-row items-center justify-between border border-unripe-pale hover:border-primary-fixed-dim transition-colors group">
+<div class="flex items-center gap-lg w-full md:w-auto">
+<div class="w-16 text-center">
+<span class="font-headline-hanzi text-3xl block text-primary">发展</span>
+</div>
+<div>
+<span class="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant block mb-xs">fā zhǎn</span>
+<span class="font-body-md text-body-md text-on-surface">development; growth; to develop</span>
+</div>
+</div>
+<div class="flex items-center justify-between w-full md:w-auto mt-md md:mt-0 gap-md">
+<span class="font-label-caps text-label-caps text-wood-warm border border-wood-warm px-sm py-xs rounded">HSK 4</span>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-sm rounded hover:bg-surface-variant text-on-surface-variant"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-sm rounded hover:bg-error-container text-error"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+</div>
+<!-- Card Item 2 (Custom) -->
+<div class="bg-surface-container rounded p-md flex flex-col md:flex-row items-center justify-between border border-unripe-pale hover:border-primary-fixed-dim transition-colors group">
+<div class="flex items-center gap-lg w-full md:w-auto">
+<div class="w-16 text-center">
+<span class="font-headline-hanzi text-3xl block text-primary">预算</span>
+</div>
+<div>
+<span class="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant block mb-xs">yù suàn</span>
+<span class="font-body-md text-body-md text-on-surface">budget</span>
+</div>
+</div>
+<div class="flex items-center justify-between w-full md:w-auto mt-md md:mt-0 gap-md">
+<span class="font-label-caps text-label-caps text-secondary border border-secondary px-sm py-xs rounded">Custom</span>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-sm rounded hover:bg-surface-variant text-on-surface-variant"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-sm rounded hover:bg-error-container text-error"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+</div>
+<!-- Card Item 3 (Official) -->
+<div class="bg-surface-container rounded p-md flex flex-col md:flex-row items-center justify-between border border-unripe-pale hover:border-primary-fixed-dim transition-colors group">
+<div class="flex items-center gap-lg w-full md:w-auto">
+<div class="w-16 text-center">
+<span class="font-headline-hanzi text-3xl block text-primary">会议</span>
+</div>
+<div>
+<span class="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant block mb-xs">huì yì</span>
+<span class="font-body-md text-body-md text-on-surface">meeting; conference</span>
+</div>
+</div>
+<div class="flex items-center justify-between w-full md:w-auto mt-md md:mt-0 gap-md">
+<span class="font-label-caps text-label-caps text-wood-warm border border-wood-warm px-sm py-xs rounded">HSK 4</span>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-sm rounded hover:bg-surface-variant text-on-surface-variant"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-sm rounded hover:bg-error-container text-error"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-lg flex justify-center">
+<button class="px-lg py-sm border border-outline-variant rounded font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-variant transition-colors">Load More</button>
+</div>
+</section>
+<!-- View: Create/Edit Deck (Form + Pathways) -->
+<section class="tab-content max-w-reading-width mx-auto" id="view-create">
+<div class="bg-surface-container rounded-lg p-lg border border-unripe-pale mb-lg">
+<h3 class="font-headline-md text-xl text-primary mb-md">Deck Details</h3>
+<div class="space-y-md">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-sm">Deck Name</label>
+<input class="w-full px-md py-sm bg-surface border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="e.g., Tech Startup Vocab" type="text"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-sm">Description (Optional)</label>
+<textarea class="w-full px-md py-sm bg-surface border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface resize-none" placeholder="What is the focus of this deck?" rows="3"></textarea>
+</div>
+</div>
+</div>
+<h3 class="font-headline-md text-xl text-primary mb-md mt-xl">Populate Deck</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Pathway 1: Add from HSK -->
+<div class="bg-surface-container-low rounded-lg p-lg border border-unripe-pale hover:border-wood-warm transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-wood-warm text-on-primary flex items-center justify-center mb-md">
+<span class="material-symbols-outlined">library_books</span>
+</div>
+<h4 class="font-headline-md text-lg text-primary mb-sm">Add from HSK Curriculum</h4>
+<p class="text-sm text-on-surface-variant mb-md">Browse official HSK vocabulary lists and select words to add to this deck.</p>
+<span class="text-wood-warm font-label-caps text-label-caps group-hover:underline flex items-center gap-xs">Browse Official Lists <span class="material-symbols-outlined text-sm">arrow_forward</span></span>
+</div>
+<!-- Pathway 2: Add Custom Card -->
+<div class="bg-surface-container-low rounded-lg p-lg border border-unripe-pale hover:border-secondary transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-secondary text-on-primary flex items-center justify-center mb-md">
+<span class="material-symbols-outlined">draw</span>
+</div>
+<h4 class="font-headline-md text-lg text-primary mb-sm">Add Your Own Card</h4>
+<p class="text-sm text-on-surface-variant mb-md">Create a custom flashcard. Enter Hanzi, Pinyin, translation, and example sentences.</p>
+<span class="text-secondary font-label-caps text-label-caps group-hover:underline flex items-center gap-xs">Create Custom Card <span class="material-symbols-outlined text-sm">arrow_forward</span></span>
+</div>
+</div>
+<div class="mt-xl flex justify-end gap-md">
+<button class="px-lg py-sm border border-outline-variant rounded font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-variant transition-colors">Cancel</button>
+<button class="px-lg py-sm bg-primary text-on-primary rounded font-label-caps text-label-caps hover:bg-secondary transition-colors shadow-sm">Save Deck</button>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="mt-auto w-full py-xl bg-surface-container-highest dark:bg-surface-container-highest flex flex-col md:flex-row justify-between items-center px-lg gap-md text-tertiary dark:text-tertiary-fixed font-body-md text-body-md">
+<div class="font-headline-md text-headline-md text-wood-warm">Ripen</div>
+<p>© 2024 Ripen Mandarin. Grow your mastery.</p>
+<div class="flex gap-md">
+<a class="text-on-tertiary-fixed-variant hover:text-primary transition-opacity duration-300" href="#">Privacy</a>
+<a class="text-on-tertiary-fixed-variant hover:text-primary transition-opacity duration-300" href="#">Terms</a>
+<a class="text-on-tertiary-fixed-variant hover:text-primary transition-opacity duration-300" href="#">Support</a>
+<a class="text-on-tertiary-fixed-variant hover:text-primary transition-opacity duration-300" href="#">Blog</a>
+</div>
+</footer>
+</main>
+<script>
+        // Simple tab switching logic
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active styling from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('text-primary', 'border-primary', 'active-tab');
+                    btn.classList.add('text-on-surface-variant', 'border-transparent');
+                });
+                
+                // Hide all content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Add active styling to clicked tab
+                button.classList.add('text-primary', 'border-primary', 'active-tab');
+                button.classList.remove('text-on-surface-variant', 'border-transparent');
+                
+                // Show corresponding content
+                const targetId = button.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    </script>
+</body></html>

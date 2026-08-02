@@ -1,0 +1,28 @@
+# Ripen — gitignore
+
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# env — JANGAN PERNAH commit ini
+.env
+.env*.local
+
+# data mentah sumber vocab (cek lisensi sebelum commit apapun di sini)
+data/*
+!data/.gitkeep
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma
+prisma/*.db

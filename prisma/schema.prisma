@@ -1,0 +1,357 @@
+// prisma/schema.prisma
+// Ripen — lihat AGENTS.md dan .opencode/agent/db-schema-agent.md sebelum mengubah file ini.
+//
+// Struktur vocab/karakter/topik/tata-bahasa di file ini mengikuti struktur resmi
+// 新版HSK考试大纲 (HSK 3.0 Syllabus, CLEC, November 2025 — efektif Juli 2026), yang
+// terdiri dari 5 komponen terpisah:
+//   1. 任务大纲 (Task Syllabus)     -> model Task
+//   2. 话题大纲 (Topic Syllabus)    -> model Topic (hierarkis 3 level)
+//   3. 词汇大纲 (Vocabulary)        -> model Card (kata/词语)
+//   4. 汉字大纲 (Character)         -> model Character (karakter tunggal/汉字,
+//                                      terpisah dari Card karena unit berbeda)
+//   5. 语法大纲 (Grammar Syllabus)  -> model GrammarPoint
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH (skema standar Auth.js / NextAuth Prisma Adapter)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  tier          Tier      @default(FREE)
+  createdAt     DateTime  @default(now())
+
+  accounts      Account[]
+  sessions      Session[]
+  cardProgress  CardProgress[]
+  usageLogs     UsageLog[]
+  subscription  Subscription?
+  decks         Deck[]
+  customCards   CustomCard[]
+}
+
+// UNLIMITED ditambahkan untuk akun tanpa batas quota (mis. owner/tester yang
+// diberi akses manual). Jangan otomatis assign tier ini lewat flow signup biasa —
+// hanya lewat perubahan manual di DB atau admin action eksplisit.
+enum Tier {
+  FREE
+  PREMIUM
+  UNLIMITED
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// 1. TASK SYLLABUS (任务大纲) — kompetensi dengar/bicara/baca/tulis per level
+// ============================================================
+
+model Task {
+  id          String @id @default(cuid())
+  hskLevel    Int    // 1-9
+  category    String // misal "介绍个人情况", "交流、处理日常事务"
+  description String @db.Text // deskripsi kemampuan (bisa berisi 能听懂..., 能说..., dst)
+  skillType   SkillType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hskLevel])
+}
+
+enum SkillType {
+  LISTENING  // 听
+  SPEAKING   // 说
+  READING    // 读
+  WRITING    // 写
+}
+
+// ============================================================
+// 2. TOPIC SYLLABUS (话题大纲) — hierarki 3 level: 一级/二级/三级话题
+// ============================================================
+
+model Topic {
+  id             String  @id @default(cuid())
+  hskLevel       Int     // level minimum topik ini muncul
+  levelOneName   String  // 一级话题, misal "日常生活"
+  levelTwoName   String  // 二级话题, misal "交通出行"
+  levelThreeName String  // 三级话题, misal "出行方式"
+
+  createdAt DateTime @default(now())
+
+  cards       Card[]
+  customCards CustomCard[]
+
+  @@unique([levelOneName, levelTwoName, levelThreeName])
+  @@index([hskLevel])
+}
+
+// ============================================================
+// 3. VOCABULARY (词汇大纲) — kata/词语, GLOBAL/SHARED semua user
+// ============================================================
+
+enum CardType {
+  SHUXIE // 书写 - must-write
+  RENDU  // 认读 - recognition-only
+}
+
+model Card {
+  id       String @id @default(cuid())
+  hanzi    String
+  pinyin   String
+  artiId   String // arti Bahasa Indonesia
+  artiEn   String // arti Inggris
+  hskLevel Int    // level utama kata ini (kumulatif 1-9)
+  // Catatan dari dokumen asli: beberapa kata punya makna/POS tambahan yang baru
+  // relevan di level lebih tinggi, dinotasikan mis. "3（4）" di 大纲 asli.
+  // Field ini menyimpan level tambahan tsb jika ada.
+  extraLevelNote  String?
+  partOfSpeech    String // 词性, misal 动/名/形/副 dst — bisa multi, simpan apa adanya
+  topicId         String?
+  tipe            CardType
+  exampleSentence String? @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  topic     Topic?         @relation(fields: [topicId], references: [id])
+  progress  CardProgress[]
+  deckCards DeckCard[]
+
+  @@unique([hanzi, hskLevel])
+  @@index([hskLevel])
+  @@index([topicId])
+}
+
+// ============================================================
+// 4. CHARACTER SYLLABUS (汉字大纲) — karakter tunggal, terpisah dari Card
+//    karena unit-nya beda (汉字 vs 词语) dan splitnya eksplisit di dokumen asli:
+//    认读字 (recognition) vs 书写字 (must-write), keduanya per level.
+// ============================================================
+
+enum CharacterType {
+  RENDU  // 认读字
+  SHUXIE // 书写字
+}
+
+model Character {
+  id       String        @id @default(cuid())
+  hanzi    String        // single character
+  hskLevel Int
+  tipe     CharacterType
+
+  createdAt DateTime @default(now())
+
+  @@unique([hanzi, hskLevel, tipe])
+  @@index([hskLevel])
+}
+
+// ============================================================
+// 5. GRAMMAR SYLLABUS (语法大纲)
+// ============================================================
+
+model GrammarPoint {
+  id          String @id @default(cuid())
+  hskLevel    Int
+  category    String // 类别, misal "语素", "词类"
+  subCategory String // 类别名称, misal "前缀", "量词"
+  content     String @db.Text // 语法内容 — detail/contoh
+
+  createdAt DateTime @default(now())
+
+  @@index([hskLevel])
+}
+
+// ============================================================
+// DECK (custom per user) — subset dari Card global DAN/ATAU custom card sendiri
+// ============================================================
+
+model Deck {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deckCards   DeckCard[]   // subset dari Card global
+  customCards CustomCard[] // kartu buatan user sendiri, scoped ke deck ini
+
+  @@index([userId])
+}
+
+// Join table: Deck <-> Card global (many-to-many, user pilih subset)
+model DeckCard {
+  id     String @id @default(cuid())
+  deckId String
+  cardId String
+
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, cardId])
+}
+
+// Kartu custom milik user sendiri — TIDAK shared, beda dari Card global.
+// Field lebih longgar (arti opsional dalam satu bahasa saja, dsb) karena user
+// yang membuat, bukan konten kurikulum resmi.
+model CustomCard {
+  id              String   @id @default(cuid())
+  userId          String
+  deckId          String
+  hanzi           String
+  pinyin          String
+  arti            String // user boleh isi bahasa apapun, tidak dipisah id/en
+  hskLevel        Int? // opsional, kalau user mau tag manual ke level tertentu
+  topicId         String?
+  exampleSentence String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck     Deck                 @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  topic    Topic?               @relation(fields: [topicId], references: [id])
+  progress CustomCardProgress[]
+
+  @@index([userId])
+  @@index([deckId])
+}
+
+// ============================================================
+// PROGRESS (PER USER, PER CARD) — field standar FSRS
+// Dipisah jadi 2 model (Card vs CustomCard) supaya FK tetap bersih & tidak perlu
+// nullable ganda; logic FSRS di lib/fsrs.ts tetap satu implementasi yang dipakai
+// keduanya (lihat srs-engine-agent).
+// ============================================================
+
+enum CardStatus {
+  NEW
+  LEARNING
+  REVIEW
+  MASTERED
+}
+
+model CardProgress {
+  id             String     @id @default(cuid())
+  userId         String
+  cardId         String
+  stability      Float      @default(0)
+  difficulty     Float      @default(0)
+  dueDate        DateTime   @default(now())
+  reviewCount    Int        @default(0)
+  lapses         Int        @default(0)
+  status         CardStatus @default(NEW)
+  lastReviewedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@index([userId, dueDate])
+  @@index([userId, status])
+}
+
+model CustomCardProgress {
+  id             String     @id @default(cuid())
+  userId         String
+  customCardId   String
+  stability      Float      @default(0)
+  difficulty     Float      @default(0)
+  dueDate        DateTime   @default(now())
+  reviewCount    Int        @default(0)
+  lapses         Int        @default(0)
+  status         CardStatus @default(NEW)
+  lastReviewedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  customCard CustomCard @relation(fields: [customCardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, customCardId])
+  @@index([userId, dueDate])
+  @@index([userId, status])
+}
+
+// ============================================================
+// USAGE / QUOTA TRACKING (audit historis; enforcement real-time di Redis)
+// ============================================================
+
+enum Feature {
+  CHAT
+  EXAM
+  READING
+}
+
+model UsageLog {
+  id      String   @id @default(cuid())
+  userId  String
+  feature Feature
+  date    DateTime @db.Date
+  count   Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature, date])
+}
+
+// ============================================================
+// SUBSCRIPTION (disiapkan strukturnya, belum aktif di MVP Fase 1-2)
+// ============================================================
+
+model Subscription {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  tier       Tier      @default(FREE)
+  startedAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  paymentRef String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

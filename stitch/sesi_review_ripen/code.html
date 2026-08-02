@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ripen - Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dbdad5",
+                        "on-primary-container": "#99baa1",
+                        "surface-container": "#f0eee9",
+                        "surface-variant": "#e4e2dd",
+                        "hard-orange": "#E5A462",
+                        "outline": "#727972",
+                        "wood-warm": "#5C5346",
+                        "on-background": "#1b1c19",
+                        "secondary-fixed": "#ccebc8",
+                        "unripe-pale": "#DEE5D4",
+                        "primary-fixed": "#c8ebd0",
+                        "again-red": "#D16A5E",
+                        "on-tertiary-fixed": "#1f1b13",
+                        "primary": "#163422",
+                        "secondary-container": "#ccebc8",
+                        "surface": "#fbf9f4",
+                        "secondary": "#4a654a",
+                        "surface-bright": "#fbf9f4",
+                        "on-primary-fixed-variant": "#2f4d39",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#2d4b37",
+                        "on-tertiary-container": "#bab1a5",
+                        "surface-container-highest": "#e4e2dd",
+                        "background": "#fbf9f4",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#022110",
+                        "tertiary": "#332e25",
+                        "surface-container-high": "#eae8e3",
+                        "on-secondary-fixed": "#07200b",
+                        "easy-blue": "#6B8E9E",
+                        "primary-fixed-dim": "#adcfb4",
+                        "ripe-forest": "#1B3022",
+                        "tertiary-container": "#4a443b",
+                        "tertiary-fixed-dim": "#cfc5b9",
+                        "on-secondary-container": "#506b50",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#b0ceae",
+                        "good-green": "#8BA889",
+                        "inverse-on-surface": "#f2f1ec",
+                        "surface-container-low": "#f5f3ee",
+                        "on-tertiary-fixed-variant": "#4c463c",
+                        "tertiary-fixed": "#ebe1d4",
+                        "on-surface": "#1b1c19",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c2c8c0",
+                        "surface-tint": "#466550",
+                        "inverse-surface": "#30312e",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#334d34",
+                        "inverse-primary": "#adcfb4",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#424843"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "4px",
+                        "unit": "4px",
+                        "reading-width": "680px",
+                        "container-max": "1120px",
+                        "sm": "8px",
+                        "xl": "48px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "pinyin-ruby": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display-lg": ["Manrope"],
+                        "headline-hanzi": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "pinyin-ruby": ["12px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-hanzi": ["64px", { "lineHeight": "80px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-surface');
+        }
+        
+        /* Subtle paper texture for flashcard */
+        .paper-texture {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-container {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .flashcard-flipped .flashcard-container {
+            transform: rotateY(180deg);
+        }
+
+        .micro-shadow-active {
+            box-shadow: 0 16px 32px -4px rgba(22, 52, 34, 0.08); /* Tinted with primary forest green */
+        }
+        
+        .progress-ring {
+            transition: stroke-dashoffset 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col items-center">
+<!-- Top Navigation (Hidden on this transactional/focused screen per JSON rules) -->
+<!-- We skip TopAppBar and SideNavBar to prioritize the "focused single-column" for Review -->
+<!-- Main Content Canvas - Focused Review Mode -->
+<main class="w-full max-w-[680px] flex-1 flex flex-col px-md py-lg md:py-xl mx-auto min-h-[1024px]">
+<!-- Header / Progress Area -->
+<header class="w-full flex justify-between items-center mb-xl">
+<button aria-label="Close Review" class="flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<div class="flex items-center gap-md">
+<div class="flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Reviewing</span>
+<span class="font-body-md text-body-md font-medium text-primary">12 / 30</span>
+</div>
+<!-- Circular Progress Indicator -->
+<div class="relative w-12 h-12">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+<!-- Background Circle (unripe-pale) -->
+<circle class="stroke-unripe-pale" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<!-- Progress Circle (Gradient secondary to primary would be complex in raw SVG without defs, using primary for now) -->
+<circle class="stroke-primary progress-ring" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="60" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+</header>
+<!-- Flashcard Area -->
+<div class="flex-1 flex flex-col justify-center perspective-1000 w-full mb-xl" id="flashcard-wrapper">
+<!-- Card Container (Front and Back) -->
+<div class="flashcard-container relative w-full h-[400px] transform-style-3d cursor-pointer" onclick="flipCard()">
+<!-- Front of Card (Hanzi) -->
+<div class="absolute inset-0 w-full h-full backface-hidden bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active">
+<span class="font-headline-hanzi text-headline-hanzi text-primary tracking-widest">学习</span>
+<div class="absolute bottom-md text-center w-full">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase opacity-50">Tap to reveal</span>
+</div>
+</div>
+<!-- Back of Card (Details) -->
+<div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active text-center">
+<!-- Hanzi again for context -->
+<span class="font-headline-md text-headline-md text-primary mb-xs">学习</span>
+<!-- Pinyin (Ruby Style) -->
+<span class="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant mb-md">xuéxí</span>
+<div class="w-12 h-[1px] bg-outline-variant mb-md opacity-50"></div>
+<!-- Translation & POS -->
+<div class="flex flex-col items-center gap-xs mb-lg">
+<span class="font-body-lg text-body-lg text-primary font-medium">Belajar / Learn</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-sm py-unit rounded-sm uppercase">Verb</span>
+</div>
+<!-- Example Sentence -->
+<div class="text-left w-full max-w-[80%] border-l-2 border-primary-fixed-dim pl-sm mt-sm">
+<p class="font-body-md text-body-md text-on-surface">我每天<span class="text-primary font-semibold border-b border-primary-fixed">学习</span>中文。</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-unit">Wǒ měitiān xuéxí zhōngwén.</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-unit opacity-75">I learn Chinese every day.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- SRS Rating Buttons (Initially hidden or disabled, revealed when flipped) -->
+<div class="w-full flex justify-between gap-sm transition-opacity duration-300 opacity-30 pointer-events-none" id="srs-buttons">
+<!-- Ulang (Again) -->
+<button class="flex-1 flex flex-col items-center justify-center py-md rounded-lg bg-error-container text-on-error-container hover:brightness-95 transition-all border border-transparent hover:border-again-red">
+<span class="font-label-caps text-label-caps uppercase mb-unit">Ulang</span>
+<span class="font-pinyin-ruby text-pinyin-ruby opacity-75">&lt; 1m</span>
+</button>
+<!-- Sulit (Hard) -->
+<button class="flex-1 flex flex-col items-center justify-center py-md rounded-lg bg-[#FDF0E1] text-hard-orange hover:brightness-95 transition-all border border-transparent hover:border-hard-orange">
+<span class="font-label-caps text-label-caps uppercase mb-unit">Sulit</span>
+<span class="font-pinyin-ruby text-pinyin-ruby opacity-75">10m</span>
+</button>
+<!-- Bagus (Good) -->
+<button class="flex-1 flex flex-col items-center justify-center py-md rounded-lg bg-secondary-fixed text-on-secondary-fixed hover:brightness-95 transition-all border border-transparent hover:border-secondary">
+<span class="font-label-caps text-label-caps uppercase mb-unit">Bagus</span>
+<span class="font-pinyin-ruby text-pinyin-ruby opacity-75">1d</span>
+</button>
+<!-- Mudah (Easy) -->
+<button class="flex-1 flex flex-col items-center justify-center py-md rounded-lg bg-primary-fixed text-on-primary-fixed hover:brightness-95 transition-all border border-transparent hover:border-primary">
+<span class="font-label-caps text-label-caps uppercase mb-unit">Mudah</span>
+<span class="font-pinyin-ruby text-pinyin-ruby opacity-75">4d</span>
+</button>
+</div>
+</main>
+<script>
+        function flipCard() {
+            const wrapper = document.getElementById('flashcard-wrapper');
+            const srsButtons = document.getElementById('srs-buttons');
+            
+            // Toggle flip state
+            wrapper.classList.toggle('flashcard-flipped');
+            
+            // Enable SRS buttons when flipped
+            if (wrapper.classList.contains('flashcard-flipped')) {
+                srsButtons.classList.remove('opacity-30', 'pointer-events-none');
+                srsButtons.classList.add('opacity-100');
+            } else {
+                srsButtons.classList.add('opacity-30', 'pointer-events-none');
+                srsButtons.classList.remove('opacity-100');
+            }
+        }
+    </script>
+</body></html>
