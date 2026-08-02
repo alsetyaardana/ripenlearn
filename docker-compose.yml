@@ -31,9 +31,9 @@ services:
       retries: 5
     networks:
       - internal
-    # Buka port ini kalau perlu akses langsung dari host saat development
-    # ports:
-    #   - "5432:5432"
+    # Dibuka untuk akses langsung dari host saat development (Prisma migrate dsb).
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
@@ -47,6 +47,8 @@ services:
       retries: 5
     networks:
       - internal
+    ports:
+      - "6379:6379"
 
   caddy:
     image: caddy:2-alpine
