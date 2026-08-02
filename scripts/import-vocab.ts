@@ -10,11 +10,13 @@
 //   5. npx tsx scripts/import-vocab.ts               # script ini
 //
 // Step 5 SELALU regenerate data/vocab-draft.json dari data/vocab-parsed.json +
-// data/vocab-translations-l1.json (draft translation AI-assisted, ditulis
-// langsung dari pengetahuan Mandarin model — TANPA panggilan network/API apa
-// pun, sesuai batasan task; sumbernya scripts/_parse/vocab_translations_l1.py).
-// Field artiId/artiEn TIDAK ada di dokumen sumber (hanya Mandarin + pinyin +
-// 词性) — lihat docs/README.md dan CLAUDE.md bagian data model.
+// data/vocab-translations-l{N}.json per level (draft translation AI-assisted,
+// ditulis langsung dari pengetahuan Mandarin model — TANPA panggilan
+// network/API apa pun, sesuai batasan task; sumbernya
+// scripts/_parse/vocab_translations_l{N}.py, di-export ke JSON lewat
+// scripts/_parse/export_translations.py). Field artiId/artiEn TIDAK ada di
+// dokumen sumber (hanya Mandarin + pinyin + 词性) — lihat docs/README.md dan
+// CLAUDE.md bagian data model.
 //
 // HARD RULE (CLAUDE.md): konten kurikulum hasil auto-translate TIDAK BOLEH
 // masuk ke tabel Card tanpa direview manusia. Maka:
@@ -25,12 +27,13 @@
 //     script exit 0 setelah regenerate draft, TANPA insert apa pun ke Card.
 //   - Pass --from-reviewed <path> untuk pakai file reviewed custom.
 //
-// KNOWN LIMITATION saat ini: draft translation baru mencakup HSK level 1
-// (300/10968 entry hasil parsing) — lihat scripts/_parse/vocab_translations_l1.py.
-// Level 2-9 (10668 entry) tetap muncul di vocab-draft.json dengan artiId/artiEn
-// kosong dan translationPending:true (bukan di-drop), supaya reviewer bisa
-// lihat seluruh vocab yang berhasil di-parse strukturnya, dan menambah
-// translation level lanjutan tinggal nambah lookup table baru tanpa perlu
+// KNOWN LIMITATION saat ini: draft translation mencakup HSK level 1-2 penuh
+// (300 + 198 entry) — lihat scripts/_parse/vocab_translations_l1.py dan
+// vocab_translations_l2.py. Level 3-9 tetap muncul di vocab-draft.json dengan
+// artiId/artiEn kosong dan translationPending:true (bukan di-drop), supaya
+// reviewer bisa lihat seluruh vocab yang berhasil di-parse strukturnya, dan
+// menambah translation level lanjutan tinggal nambah lookup table baru
+// (vocab_translations_l{N}.py) + re-run export_translations.py, tanpa perlu
 // re-run ekstraksi PDF dari awal.
 //
 // tipe (SHUXIE/RENDU) DIDERIVE dari Character syllabus (kata dianggap SHUXIE
@@ -74,17 +77,32 @@ interface ReviewedVocab {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const PARSED_PATH = path.join(DATA_DIR, "vocab-parsed.json");
-const TRANSLATIONS_L1_PATH = path.join(DATA_DIR, "vocab-translations-l1.json");
 const DRAFT_PATH = path.join(DATA_DIR, "vocab-draft.json");
+
+// Draft translations are authored by hand per HSK level in
+// scripts/_parse/vocab_translations_l{N}.py (no network/API calls, see
+// CLAUDE.md), then exported to data/vocab-translations-l{N}.json by
+// scripts/_parse/export_translations.py. Levels without an exported JSON
+// file simply stay translationPending:true here -- coverage can be extended
+// level by level without touching this script.
+function loadLevelTranslations(): Map<number, Record<string, [string, string]>> {
+  const byLevel = new Map<number, Record<string, [string, string]>>();
+  for (let level = 1; level <= 9; level++) {
+    const p = path.join(DATA_DIR, `vocab-translations-l${level}.json`);
+    if (fs.existsSync(p)) {
+      byLevel.set(level, JSON.parse(fs.readFileSync(p, "utf-8")));
+    }
+  }
+  return byLevel;
+}
 
 function regenerateDraft(): DraftVocab[] {
   const parsed: ParsedVocab[] = JSON.parse(fs.readFileSync(PARSED_PATH, "utf-8"));
-  const l1Translations: Record<string, [string, string]> = fs.existsSync(TRANSLATIONS_L1_PATH)
-    ? JSON.parse(fs.readFileSync(TRANSLATIONS_L1_PATH, "utf-8"))
-    : {};
+  const translationsByLevel = loadLevelTranslations();
 
   const draft: DraftVocab[] = parsed.map((e) => {
-    const tr = e.hskLevel === 1 ? l1Translations[e.hanzi] : undefined;
+    const levelTranslations = translationsByLevel.get(e.hskLevel);
+    const tr = levelTranslations ? levelTranslations[e.hanzi] : undefined;
     return {
       ...e,
       artiId: tr ? tr[0] : "",
