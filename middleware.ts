@@ -15,6 +15,8 @@ export const config = {
     "/review/:path*",
     "/chat/:path*",
     "/deck/:path*",
+    "/reading/:path*",
+    "/exam/:path*",
     "/api/review/:path*",
     "/api/chat/:path*",
     "/api/exam/:path*",

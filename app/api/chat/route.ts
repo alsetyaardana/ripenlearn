@@ -29,11 +29,24 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  const { message } = await req.json();
+  const body = await req.json().catch(() => null);
+  const message = body?.message as string | undefined;
+  if (!message || typeof message !== "string") {
+    return NextResponse.json(
+      { error: "Invalid body: expected { message: string }" },
+      { status: 400 }
+    );
+  }
 
-  // TODO(ai-integration-agent): implementasikan getMasteredCards() di srs-engine-agent dulu
-  const masteredWords = await getMasteredCards(userId);
-  const reply = await chatWithConstrainedVocab(masteredWords, message);
-
-  return NextResponse.json({ reply });
+  try {
+    const masteredWords = await getMasteredCards(userId);
+    const reply = await chatWithConstrainedVocab(masteredWords, message);
+    return NextResponse.json({ reply });
+  } catch (err) {
+    console.error("chat route error:", err);
+    return NextResponse.json(
+      { error: "Gagal menghubungi AI, coba lagi sebentar lagi." },
+      { status: 502 }
+    );
+  }
 }
