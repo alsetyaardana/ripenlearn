@@ -26,3 +26,7 @@ next-env.d.ts
 
 # prisma
 prisma/*.db
+
+# python (scripts/_parse helper scripts)
+__pycache__/
+*.pyc
