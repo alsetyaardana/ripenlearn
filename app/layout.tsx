@@ -2,6 +2,10 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/lib/auth";
+import { SidebarProvider } from "@/components/sidebar-context";
+import { LanguageProvider } from "@/contexts/language-context";
+import AppSidebarWrapper from "@/components/app-sidebar-wrapper";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin"],
@@ -22,23 +26,50 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ripen",
+  title: {
+    default: "Ripen — Belajar Kosakata Mandarin",
+    template: "%s | Ripen",
+  },
   description: "Belajar vocab Mandarin sampai matang, baru boleh dipakai ngobrol.",
+  metadataBase: new URL("https://ripenlearn.web.id"),
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+  const user = session?.user;
+  const isLoggedIn = Boolean(user);
+
   return (
-    <html
-      lang="id"
-      className={`${beVietnamPro.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
-    >
+    <html lang="id" className={`${beVietnamPro.variable} ${manrope.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-background text-on-surface antialiased">{children}</body>
+      <body className="bg-background text-on-surface antialiased">
+        <LanguageProvider>
+          {isLoggedIn ? (
+            <SidebarProvider>
+              <AppSidebarWrapper
+                name={user!.name}
+                image={(user as unknown as { image?: string | null }).image ?? null}
+                tier={(user as unknown as { tier?: string | null }).tier ?? null}
+                role={(user as unknown as { role?: string | null }).role ?? null}
+              >
+                {children}
+              </AppSidebarWrapper>
+            </SidebarProvider>
+          ) : (
+            <>
+              {children}
+            </>
+          )}
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

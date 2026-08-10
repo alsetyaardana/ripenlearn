@@ -4,16 +4,18 @@
 // referensi itu tanpa alasan.
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useTts } from "@/lib/use-tts";
 
 interface ReviewCard {
   cardId: string;
+  source: "hsk" | "chunk" | "custom";
   hanzi: string;
   pinyin: string;
   artiId: string;
   artiEn: string;
-  partOfSpeech: string;
+  partOfSpeech: string | null;
   exampleSentence: string | null;
   status: string;
   dueDate: string | null;
@@ -30,6 +32,7 @@ const RATING_BUTTONS: { rating: Rating; label: string; interval: string; classes
 
 export default function ReviewPage() {
   const router = useRouter();
+  const { speak } = useTts();
   const [queue, setQueue] = useState<ReviewCard[]>([]);
   const [total, setTotal] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -54,6 +57,14 @@ export default function ReviewPage() {
 
   const current = queue[0];
 
+  const lastPlayedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (flipped && current && lastPlayedRef.current !== current.hanzi) {
+      lastPlayedRef.current = current.hanzi;
+      speak(current.hanzi, "zh");
+    }
+  }, [flipped, current?.hanzi, speak]);
+
   const submitRating = useCallback(
     async (rating: Rating) => {
       if (!current || submitting) return;
@@ -62,7 +73,7 @@ export default function ReviewPage() {
         const res = await fetch("/api/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cardId: current.cardId, rating }),
+          body: JSON.stringify({ cardId: current.cardId, source: current.source, rating }),
         });
         if (!res.ok) throw new Error(`Gagal menyimpan rating (${res.status})`);
         setQueue((q) => q.slice(1));
@@ -133,11 +144,11 @@ export default function ReviewPage() {
 
       <div className={`flex-1 flex flex-col justify-center perspective-1000 w-full mb-xl ${flipped ? "flashcard-flipped" : ""}`}>
         <div
-          className="flashcard-container relative w-full h-[400px] transform-style-3d cursor-pointer"
+          className="flashcard-container relative w-full min-h-[300px] h-auto max-h-[400px] transform-style-3d cursor-pointer"
           onClick={() => setFlipped((f) => !f)}
         >
           <div className="absolute inset-0 w-full h-full backface-hidden bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active">
-            <span className="font-headline-hanzi text-headline-hanzi text-primary tracking-widest">
+            <span className="font-headline-hanzi text-[40px] sm:text-[56px] md:text-[64px] text-primary tracking-widest">
               {current.hanzi}
             </span>
             <div className="absolute bottom-md text-center w-full">
@@ -147,27 +158,41 @@ export default function ReviewPage() {
             </div>
           </div>
 
-          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active text-center">
-            <span className="font-headline-md text-headline-md text-primary mb-xs">{current.hanzi}</span>
-            <span className="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant mb-md">
-              {current.pinyin}
-            </span>
-            <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
-            <div className="flex flex-col items-center gap-xs mb-lg">
-              <span className="font-body-lg text-body-lg text-primary font-medium">
-                {current.artiId} / {current.artiEn}
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-surface-container-lowest border border-unripe-pale rounded-xl paper-texture micro-shadow-active text-center">
+            <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-center p-lg">
+              <span className="font-headline-md text-headline-md text-primary mb-xs">{current.hanzi}</span>
+              <button
+                aria-label="Play pronunciation"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speak(current.hanzi, "zh");
+                }}
+                className="absolute top-md right-md flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
+              >
+                <span className="material-symbols-outlined text-[24px]">volume_up</span>
+              </button>
+              <span className="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant mb-md">
+                {current.pinyin}
               </span>
-              {current.partOfSpeech && (
-                <span className="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-sm py-unit rounded uppercase">
-                  {current.partOfSpeech}
+              <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
+              <div className="flex flex-col items-center gap-xs mb-lg">
+                <span className="font-body-lg text-body-lg text-primary font-medium">
+                  {current.source === "chunk" || current.source === "custom"
+                    ? current.artiId
+                    : `${current.artiId} / ${current.artiEn}`}
                 </span>
+                {current.partOfSpeech && (
+                  <span className="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-sm py-unit rounded uppercase">
+                    {current.partOfSpeech}
+                  </span>
+                )}
+              </div>
+              {current.exampleSentence && (
+                <div className="text-left w-full max-w-[80%] border-l-2 border-primary-fixed-dim pl-sm mt-sm">
+                  <p className="font-body-md text-body-md text-on-surface">{current.exampleSentence}</p>
+                </div>
               )}
             </div>
-            {current.exampleSentence && (
-              <div className="text-left w-full max-w-[80%] border-l-2 border-primary-fixed-dim pl-sm mt-sm">
-                <p className="font-body-md text-body-md text-on-surface">{current.exampleSentence}</p>
-              </div>
-            )}
           </div>
         </div>
       </div>

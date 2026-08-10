@@ -10,10 +10,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    environment:
+      HOSTNAME: 0.0.0.0
     expose:
       - "3000"
     networks:
       - internal
+      - proxy-net
 
   db:
     image: postgres:16-alpine
@@ -67,6 +70,8 @@ services:
 
 networks:
   internal:
+  proxy-net:
+    external: true
 
 volumes:
   pgdata:

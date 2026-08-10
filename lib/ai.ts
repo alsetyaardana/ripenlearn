@@ -99,10 +99,14 @@ const READING_TASK_INSTRUCTION = [
  * supaya UI bisa memberi disclaimer (bukan silently gagal — user tetap dapat materi).
  */
 export async function generateReadingPassage(
-  masteredWords: MasteredCard[]
+  masteredWords: MasteredCard[],
+  topic?: string
 ): Promise<ReadingPassage> {
   const whitelist = buildVocabWhitelist(masteredWords);
   const systemPrompt = buildSystemPrompt(masteredWords, "reading", READING_TASK_INSTRUCTION);
+  const topicNote = topic?.trim()
+    ? `Topik: ${topic.trim()}. Buat paragraf TENTANG topik ini (selama masih muat dalam vocab yang dikuasai).`
+    : "";
 
   const requestOnce = async (extraUserNote?: string) => {
     const response = await client.chat.completions.create({
@@ -112,7 +116,9 @@ export async function generateReadingPassage(
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: extraUserNote ?? "Buatkan latihan bacanya sekarang.",
+          content: [topicNote, extraUserNote ?? "Buatkan latihan bacanya sekarang."]
+            .filter(Boolean)
+            .join("\n\n"),
         },
       ],
     });

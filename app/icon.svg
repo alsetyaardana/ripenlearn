@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background: forest green rounded square -->
+  <rect width="64" height="64" rx="14" fill="#163422"/>
+  <!-- Seed/sprout: two leaves growing from a small mound -->
+  <ellipse cx="32" cy="48" rx="12" ry="5" fill="#2d4b37"/>
+  <!-- Left leaf -->
+  <path d="M32 44 C 24 40, 20 32, 22 24 C 30 26, 34 32, 32 44 Z" fill="#c8ebd0"/>
+  <!-- Right leaf -->
+  <path d="M32 44 C 40 40, 44 32, 42 24 C 34 26, 30 32, 32 44 Z" fill="#adcfb4"/>
+  <!-- Stem -->
+  <path d="M32 46 L 32 40" stroke="#c8ebd0" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

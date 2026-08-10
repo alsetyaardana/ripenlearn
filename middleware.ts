@@ -22,5 +22,9 @@ export const config = {
     "/api/exam/:path*",
     "/api/reading/:path*",
     "/api/deck/:path*",
+    "/api/cards/:path*",
+    "/api/settings/:path*",
+    "/api/admin/:path*",
+    "/api/tts/:path*",
   ],
 };

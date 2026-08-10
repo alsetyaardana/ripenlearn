@@ -12,7 +12,8 @@
 //   5. 语法大纲 (Grammar Syllabus)  -> model GrammarPoint
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -30,16 +31,22 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  passwordHash  String?
   tier          Tier      @default(FREE)
+  role          Role      @default(USER)
   createdAt     DateTime  @default(now())
 
-  accounts      Account[]
-  sessions      Session[]
-  cardProgress  CardProgress[]
-  usageLogs     UsageLog[]
-  subscription  Subscription?
-  decks         Deck[]
-  customCards   CustomCard[]
+  accounts          Account[]
+  sessions          Session[]
+  cardProgress      CardProgress[]
+  dailyTalkProgress DailyTalkProgress[]
+  usageLogs         UsageLog[]
+  subscription      Subscription?
+  decks             Deck[]
+  customCards       CustomCard[]
+  userSettings      UserSettings?
+  chatSessions      ChatSession[]
+  readingSessions   ReadingSession[]
 }
 
 // UNLIMITED ditambahkan untuk akun tanpa batas quota (mis. owner/tester yang
@@ -49,6 +56,11 @@ enum Tier {
   FREE
   PREMIUM
   UNLIMITED
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Account {
@@ -92,10 +104,10 @@ model VerificationToken {
 // ============================================================
 
 model Task {
-  id          String @id @default(cuid())
-  hskLevel    Int    // 1-9
+  id          String    @id @default(cuid())
+  hskLevel    Int // 1-9
   category    String // misal "介绍个人情况", "交流、处理日常事务"
-  description String @db.Text // deskripsi kemampuan (bisa berisi 能听懂..., 能说..., dst)
+  description String    @db.Text // deskripsi kemampuan (bisa berisi 能听懂..., 能说..., dst)
   skillType   SkillType
 
   createdAt DateTime @default(now())
@@ -105,10 +117,10 @@ model Task {
 }
 
 enum SkillType {
-  LISTENING  // 听
-  SPEAKING   // 说
-  READING    // 读
-  WRITING    // 写
+  LISTENING // 听
+  SPEAKING // 说
+  READING // 读
+  WRITING // 写
 }
 
 // ============================================================
@@ -116,11 +128,11 @@ enum SkillType {
 // ============================================================
 
 model Topic {
-  id             String  @id @default(cuid())
-  hskLevel       Int     // level minimum topik ini muncul
-  levelOneName   String  // 一级话题, misal "日常生活"
-  levelTwoName   String  // 二级话题, misal "交通出行"
-  levelThreeName String  // 三级话题, misal "出行方式"
+  id             String @id @default(cuid())
+  hskLevel       Int // level minimum topik ini muncul
+  levelOneName   String // 一级话题, misal "日常生活"
+  levelTwoName   String // 二级话题, misal "交通出行"
+  levelThreeName String // 三级话题, misal "出行方式"
 
   createdAt DateTime @default(now())
 
@@ -137,16 +149,16 @@ model Topic {
 
 enum CardType {
   SHUXIE // 书写 - must-write
-  RENDU  // 认读 - recognition-only
+  RENDU // 认读 - recognition-only
 }
 
 model Card {
-  id       String @id @default(cuid())
-  hanzi    String
-  pinyin   String
-  artiId   String // arti Bahasa Indonesia
-  artiEn   String // arti Inggris
-  hskLevel Int    // level utama kata ini (kumulatif 1-9)
+  id              String   @id @default(cuid())
+  hanzi           String
+  pinyin          String
+  artiId          String // arti Bahasa Indonesia
+  artiEn          String // arti Inggris
+  hskLevel        Int // level utama kata ini (kumulatif 1-7)
   // Catatan dari dokumen asli: beberapa kata punya makna/POS tambahan yang baru
   // relevan di level lebih tinggi, dinotasikan mis. "3（4）" di 大纲 asli.
   // Field ini menyimpan level tambahan tsb jika ada.
@@ -154,17 +166,39 @@ model Card {
   partOfSpeech    String // 词性, misal 动/名/形/副 dst — bisa multi, simpan apa adanya
   topicId         String?
   tipe            CardType
-  exampleSentence String? @db.Text
+  exampleSentence String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  topic     Topic?         @relation(fields: [topicId], references: [id])
-  progress  CardProgress[]
-  deckCards DeckCard[]
+  topic        Topic?         @relation(fields: [topicId], references: [id])
+  progress     CardProgress[]
+  deckHskCards DeckHskCard[]
 
   @@unique([hanzi, hskLevel])
   @@index([hskLevel])
   @@index([topicId])
+}
+
+// ============================================================
+// DAILY TALK CARDS — percakapan sehari-hari (daily|tech|romance),
+// terpisah dari Card HSK karena unitnya bukan kosakata kurikulum
+// ============================================================
+
+model DailyTalkCard {
+  id              String   @id @default(cuid())
+  hanzi           String
+  pinyin          String
+  arti            String
+  category        String // daily | tech | romance
+  exampleSentence String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  progress   DailyTalkProgress[]
+  deckChunks DeckChunkCard[]
+
+  @@unique([hanzi])
+  @@index([category])
 }
 
 // ============================================================
@@ -174,13 +208,13 @@ model Card {
 // ============================================================
 
 enum CharacterType {
-  RENDU  // 认读字
+  RENDU // 认读字
   SHUXIE // 书写字
 }
 
 model Character {
   id       String        @id @default(cuid())
-  hanzi    String        // single character
+  hanzi    String // single character
   hskLevel Int
   tipe     CharacterType
 
@@ -210,23 +244,31 @@ model GrammarPoint {
 // DECK (custom per user) — subset dari Card global DAN/ATAU custom card sendiri
 // ============================================================
 
+enum DeckKind {
+  HSK // deck berisi Card global (join DeckHskCard)
+  CHUNKING // deck berisi DailyTalkCard (join DeckChunkCard)
+  CUSTOM // deck berisi CustomCard milik user
+}
+
 model Deck {
   id          String   @id @default(cuid())
   userId      String
   name        String
   description String?
+  kind        DeckKind @default(CUSTOM)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deckCards   DeckCard[]   // subset dari Card global
-  customCards CustomCard[] // kartu buatan user sendiri, scoped ke deck ini
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deckHskCards   DeckHskCard[] // subset dari Card global (HSK)
+  deckChunkCards DeckChunkCard[] // subset dari DailyTalkCard (chunking/daily talk)
+  customCards    CustomCard[] // kartu buatan user sendiri, scoped ke deck ini
 
   @@index([userId])
 }
 
-// Join table: Deck <-> Card global (many-to-many, user pilih subset)
-model DeckCard {
+// Join table: Deck <-> Card global (many-to-many, user pilih subset HSK)
+model DeckHskCard {
   id     String @id @default(cuid())
   deckId String
   cardId String
@@ -235,6 +277,18 @@ model DeckCard {
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@unique([deckId, cardId])
+}
+
+// Join table: Deck <-> DailyTalkCard (many-to-many, user pilih subset daily talk)
+model DeckChunkCard {
+  id              String @id @default(cuid())
+  deckId          String
+  dailyTalkCardId String
+
+  deck          Deck          @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  dailyTalkCard DailyTalkCard @relation(fields: [dailyTalkCardId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, dailyTalkCardId])
 }
 
 // Kartu custom milik user sendiri — TIDAK shared, beda dari Card global.
@@ -298,6 +352,28 @@ model CardProgress {
   @@index([userId, status])
 }
 
+model DailyTalkProgress {
+  id              String     @id @default(cuid())
+  userId          String
+  dailyTalkCardId String
+  stability       Float      @default(0)
+  difficulty      Float      @default(0)
+  dueDate         DateTime   @default(now())
+  reviewCount     Int        @default(0)
+  lapses          Int        @default(0)
+  status          CardStatus @default(NEW)
+  lastReviewedAt  DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyTalkCard DailyTalkCard @relation(fields: [dailyTalkCardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dailyTalkCardId])
+  @@index([userId, dueDate])
+  @@index([userId, status])
+}
+
 model CustomCardProgress {
   id             String     @id @default(cuid())
   userId         String
@@ -354,4 +430,96 @@ model Subscription {
   paymentRef String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// CHAT HISTORY — sesi percakapan per user + pesan-pesannya
+// ============================================================
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+// ============================================================
+// READING HISTORY — paragraf latihan baca tersimpan per user
+// (passage + terjemahan + token pinyin + pertanyaan pemahaman
+// beserta kunci jawabannya) supaya bisa dibuka ulang nanti.
+// ============================================================
+
+model ReadingSession {
+  id          String   @id @default(cuid())
+  userId      String
+  topic       String?
+  passage     String   @db.Text
+  translation String   @db.Text
+  tokens      Json?
+  createdAt   DateTime @default(now())
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions ReadingQuestion[]
+
+  @@index([userId])
+}
+
+model ReadingQuestion {
+  id        String @id @default(cuid())
+  sessionId String
+  question  String
+  options   Json // string[] of 4 options
+  answer    Int // index of correct option
+
+  session ReadingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+model UserSettings {
+  userId         String    @id
+  targetHskLevel Int?
+  targetCategory String?
+  targetDeckId   String?
+  targetDate     DateTime?
+  newCardsPerDay Int       @default(20)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============================================================
+// TTS CACHE — cache audio hasil synthesize edge-tts per teks+lang
+// (best-effort: kegagalan DB tidak boleh memblokir playback)
+// ============================================================
+
+model TtsCache {
+  id        String   @id @default(cuid())
+  textHash  String   @unique
+  text      String
+  lang      String
+  audio     Bytes
+  createdAt DateTime @default(now())
+
+  @@index([lang])
 }

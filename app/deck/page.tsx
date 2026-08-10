@@ -1,13 +1,25 @@
 // app/deck/page.tsx
 // Kelola deck: list, create, tambah subset Card global, tambah custom card.
-// TODO(frontend): ganti dengan hasil review Stitch (lihat stitch/05-deck-management.md)
-// TODO(srs-engine-agent): implementasikan pakai fungsi dari lib/deck.ts
+// Server component — auth + SSR initialDecks, interaksi client di DeckManager.
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { listDecksForUser } from "@/lib/deck";
 
-export default function DeckPage() {
+import DeckManager from "./deck-manager";
+
+export default async function DeckPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const decks = await listDecksForUser(session.user.id);
+
   return (
-    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>Deck Saya</h1>
-      <p>TODO: list deck, create deck, pilih subset Card global, tambah custom card.</p>
+    <main className="min-h-screen bg-background">
+      <div className="max-w-container-max mx-auto px-md md:px-xl py-lg">
+        <DeckManager initialDecks={decks} />
+      </div>
     </main>
   );
 }

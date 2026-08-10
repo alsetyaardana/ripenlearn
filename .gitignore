@@ -30,3 +30,6 @@ prisma/*.db
 # python (scripts/_parse helper scripts)
 __pycache__/
 *.pyc
+# tooling state
+.commandcode/
+.hermes/
