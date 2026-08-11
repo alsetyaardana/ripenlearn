@@ -31,13 +31,10 @@ interface BrowseResponse {
   hasMore: boolean;
 }
 
-type SourceTab = "all" | "hsk" | "chunk" | "custom";
 type StatusFilter = "all" | CardStatus;
-type SortKey = "hanzi" | "hsk" | "status" | "lastReviewed";
 
 interface CardBrowserProps {
   deckId: string;
-  deckKind?: "HSK" | "CHUNKING" | "CUSTOM";
 }
 
 const PAGE_SIZE = 30;
@@ -65,12 +62,9 @@ function formatDate(iso: string | null, lang: "id" | "en"): string {
   });
 }
 
-export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
+export default function CardBrowser({ deckId }: CardBrowserProps) {
   const { t, language } = useLanguage();
   const { speak } = useTts();
-  const [source, setSource] = useState<SourceTab>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [sort, setSort] = useState<SortKey>("hanzi");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -90,9 +84,9 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({
-      source,
-      status,
-      sort,
+      source: "all",
+      status: "all",
+      sort: "hanzi",
       search,
       page: String(page),
       pageSize: String(PAGE_SIZE),
@@ -107,7 +101,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
     } finally {
       setLoading(false);
     }
-  }, [deckId, source, status, sort, search, page, t]);
+  }, [deckId, search, page, t]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -117,14 +111,6 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
     };
   }, [load, search]);
 
-  // Saat ganti filter, reset ke halaman 1.
-  const changeFilter = useCallback((next: Partial<{ source: SourceTab; status: StatusFilter; sort: SortKey }>) => {
-    setPage(1);
-    if (next.source) setSource(next.source);
-    if (next.status) setStatus(next.status);
-    if (next.sort) setSort(next.sort);
-  }, []);
-
   const cards = data?.cards ?? [];
   const total = data?.total ?? 0;
   const hasMore = data?.hasMore ?? false;
@@ -132,72 +118,19 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
   const start = total === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const end = Math.min(start + cards.length - 1, total);
 
-  // Tab source dinamis: hanya tampilkan jenis kartu yang relevan untuk deck ini.
-  // Deck CHUNKING tidak punya kartu HSK, deck HSK tidak punya kartu chunking.
-  const tabs: { key: SourceTab; label: string }[] = [
-    { key: "all", label: t("deck.browseAll") },
-    ...(deckKind !== "CHUNKING" ? [{ key: "hsk" as const, label: t("deck.tabHsk") }] : []),
-    ...(deckKind === "CHUNKING" ? [{ key: "chunk" as const, label: t("deck.tabChunk") }] : []),
-    ...(deckKind === "CUSTOM" ? [{ key: "custom" as const, label: t("deck.tabCustom") }] : []),
-  ];
-
   return (
     <div className="flex flex-col gap-md">
-      {/* Controls */}
-      <div className="flex flex-col gap-sm">
-        <div className="flex flex-wrap items-center gap-sm">
-          <div className="flex rounded-lg border border-outline-variant bg-surface-container-lowest p-xs overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => changeFilter({ source: tab.key })}
-                className={`px-md py-sm rounded-lg font-body-md text-body-md whitespace-nowrap transition-colors ${
-                  source === tab.key
-                    ? "bg-primary text-on-primary shadow-sm"
-                    : "text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <select
-            value={status}
-            onChange={(e) => changeFilter({ status: e.target.value as StatusFilter })}
-            className="px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md text-on-surface"
-            aria-label={t("deck.browseStatusAll")}
-          >
-            <option value="all">{t("deck.browseStatusAll")}</option>
-            {(Object.keys(STATUS_KEYS) as CardStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {t(STATUS_KEYS[s])}
-              </option>
-            ))}
-          </select>
-          <select
-            value={sort}
-            onChange={(e) => changeFilter({ sort: e.target.value as SortKey })}
-            className="px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md text-on-surface"
-            aria-label={t("deck.sortBy")}
-          >
-            <option value="hanzi">{t("deck.sortHanzi")}</option>
-            <option value="hsk">{t("deck.sortHsk")}</option>
-            <option value="status">{t("deck.sortStatus")}</option>
-            <option value="lastReviewed">{t("deck.sortLastReviewed")}</option>
-          </select>
-        </div>
-
-        <input
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-          placeholder={t("deck.browseSearchPlaceholder")}
-          className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
-          aria-label={t("deck.browseSearchPlaceholder")}
-        />
-      </div>
+      {/* Controls — hanya search; deck sudah scoped per jenis */}
+      <input
+        value={search}
+        onChange={(e) => {
+          setPage(1);
+          setSearch(e.target.value);
+        }}
+        placeholder={t("deck.browseSearchPlaceholder")}
+        className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+        aria-label={t("deck.browseSearchPlaceholder")}
+      />
 
       {/* Content */}
       {loading && (
@@ -211,9 +144,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
 
       {!loading && !error && total === 0 && (
         <p className="font-body-md text-body-md text-on-surface-variant">
-          {search || status !== "all" || source !== "all"
-            ? t("deck.browseEmpty")
-            : t("deck.browseNoCards")}
+          {search ? t("deck.browseEmpty") : t("deck.browseNoCards")}
         </p>
       )}
 

@@ -449,7 +449,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
           onClick={() => setModalDeck(null)}
         >
           <div
-            className="w-full max-w-2xl my-lg bg-surface-container-low rounded-xl border border-unripe-pale shadow-xl flex flex-col"
+            className="w-full max-w-5xl my-lg bg-surface-container-low rounded-xl border border-unripe-pale shadow-xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -503,7 +503,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
               )}
 
               {modalView === "browse" ? (
-                <CardBrowser deckId={modalDeck.id} deckKind={modalDeck.kind} />
+                <CardBrowser deckId={modalDeck.id} />
               ) : (
                 <>
                   {curriculumKind === "category" ? (
