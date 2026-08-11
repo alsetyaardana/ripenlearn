@@ -37,6 +37,7 @@ type SortKey = "hanzi" | "hsk" | "status" | "lastReviewed";
 
 interface CardBrowserProps {
   deckId: string;
+  deckKind?: "HSK" | "CHUNKING" | "CUSTOM";
 }
 
 const PAGE_SIZE = 30;
@@ -64,7 +65,7 @@ function formatDate(iso: string | null, lang: "id" | "en"): string {
   });
 }
 
-export default function CardBrowser({ deckId }: CardBrowserProps) {
+export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
   const { t, language } = useLanguage();
   const { speak } = useTts();
   const [source, setSource] = useState<SourceTab>("all");
@@ -131,11 +132,13 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
   const start = total === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const end = Math.min(start + cards.length - 1, total);
 
+  // Tab source dinamis: hanya tampilkan jenis kartu yang relevan untuk deck ini.
+  // Deck CHUNKING tidak punya kartu HSK, deck HSK tidak punya kartu chunking.
   const tabs: { key: SourceTab; label: string }[] = [
     { key: "all", label: t("deck.browseAll") },
-    { key: "hsk", label: t("deck.tabHsk") ?? "HSK" },
-    { key: "chunk", label: t("deck.tabChunk") ?? "Daily Talk" },
-    { key: "custom", label: t("deck.tabCustom") },
+    ...(deckKind !== "CHUNKING" ? [{ key: "hsk" as const, label: t("deck.tabHsk") }] : []),
+    ...(deckKind === "CHUNKING" ? [{ key: "chunk" as const, label: t("deck.tabChunk") }] : []),
+    ...(deckKind === "CUSTOM" ? [{ key: "custom" as const, label: t("deck.tabCustom") }] : []),
   ];
 
   return (

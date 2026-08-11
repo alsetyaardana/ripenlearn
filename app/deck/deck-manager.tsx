@@ -503,7 +503,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
               )}
 
               {modalView === "browse" ? (
-                <CardBrowser deckId={modalDeck.id} />
+                <CardBrowser deckId={modalDeck.id} deckKind={modalDeck.kind} />
               ) : (
                 <>
                   {curriculumKind === "category" ? (
