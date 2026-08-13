@@ -45,6 +45,13 @@ const HSK_LEVEL_BAND_KEY: Record<number, string> = {
 
 const CATEGORY_KEYS: Record<string, string> = {
   daily: "deck.categoryDaily",
+  food: "deck.categoryFood",
+  travel: "deck.categoryTravel",
+  home: "deck.categoryHome",
+  health: "deck.categoryHealth",
+  money: "deck.categoryMoney",
+  work: "deck.categoryWork",
+  emotion: "deck.categoryEmotion",
   tech: "deck.categoryTech",
   romance: "deck.categoryRomance",
 };

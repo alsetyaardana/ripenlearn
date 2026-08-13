@@ -32,6 +32,13 @@ function getHSKOptions(language: "id" | "en") {
 
 const CATEGORY_OPTIONS = [
   { value: "daily", label: "Daily" },
+  { value: "food", label: "Food" },
+  { value: "travel", label: "Travel" },
+  { value: "home", label: "Home" },
+  { value: "health", label: "Health" },
+  { value: "money", label: "Money" },
+  { value: "work", label: "Work" },
+  { value: "emotion", label: "Emotion" },
   { value: "tech", label: "Tech" },
   { value: "romance", label: "Romance" },
 ];
