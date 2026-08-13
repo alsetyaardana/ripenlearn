@@ -29,6 +29,7 @@ function makeFakePrisma() {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
+      targetMode?: "DECK" | "CARD";
       newCardsPerDay: number;
     }
   >();
@@ -263,7 +264,7 @@ test("validateSettingsPayload menerima targetCategory null (clear)", () => {
 });
 
 test("validateSettingsPayload menolak targetCategory di luar daftar", () => {
-  assert.equal(validateSettingsPayload({ targetCategory: "travel" }).ok, false);
+  assert.equal(validateSettingsPayload({ targetCategory: "hobby" }).ok, false);
   assert.equal(validateSettingsPayload({ targetCategory: 42 }).ok, false);
   assert.equal(validateSettingsPayload({ targetCategory: { x: 1 } }).ok, false);
 });

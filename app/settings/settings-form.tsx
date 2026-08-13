@@ -14,6 +14,7 @@ interface SettingsFormProps {
     targetCategory: string | null;
     targetDeckId: string | null;
     targetDate: string;
+    targetMode: "DECK" | "CARD";
     newCardsPerDay: number;
   };
 }
@@ -50,6 +51,7 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
   const [targetCategory, setTargetCategory] = useState<string | null>(initial.targetCategory);
   const [targetDeckId, setTargetDeckId] = useState<string | null>(initial.targetDeckId);
   const [targetDate, setTargetDate] = useState(initial.targetDate);
+  const [targetMode, setTargetMode] = useState<"DECK" | "CARD">(initial.targetMode);
   const [newCardsPerDay, setNewCardsPerDay] = useState(initial.newCardsPerDay);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -67,6 +69,7 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
       const payload: Record<string, unknown> = { newCardsPerDay };
       payload.targetHskLevel = targetHskLevel;
       payload.targetDeckId = targetDeckId;
+      payload.targetMode = targetMode;
       payload.targetDate = targetDate || null;
       if (targetCategory !== null) {
         payload.targetCategory = targetCategory;
@@ -89,7 +92,7 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
     } finally {
       setSaving(false);
     }
-  }, [targetHskLevel, targetCategory, targetDeckId, targetDate, newCardsPerDay, saving, router]);
+  }, [targetHskLevel, targetCategory, targetDeckId, targetDate, targetMode, newCardsPerDay, saving, router]);
 
   const hskOptions = getHSKOptions(language);
 
@@ -193,6 +196,21 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
                   {deck.name} ({deck.totalCardCount} cards)
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <h3 className="font-headline-sm text-headline-sm text-primary mb-xs">{t("settings.targetMode")}</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-md">
+              {t("settings.targetModeDesc")}
+            </p>
+            <select
+              value={targetMode}
+              onChange={(e) => setTargetMode(e.target.value === "CARD" ? "CARD" : "DECK")}
+              className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+            >
+              <option value="DECK">{t("settings.targetModeDeck")}</option>
+              <option value="CARD">{t("settings.targetModeCard")}</option>
             </select>
           </div>
 

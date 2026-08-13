@@ -22,21 +22,34 @@ export interface UserSettingsData {
   targetCategory: string | null;
   targetDeckId: string | null;
   targetDate: Date | null;
+  targetMode: "DECK" | "CARD";
   newCardsPerDay: number;
 }
 
-export const TARGET_CATEGORIES = ["daily", "tech", "romance"] as const;
+export const TARGET_CATEGORIES = [
+  "daily",
+  "food",
+  "travel",
+  "home",
+  "health",
+  "money",
+  "work",
+  "emotion",
+  "tech",
+  "romance",
+] as const;
 
 export type SettingsPayload = {
   targetHskLevel?: unknown;
   targetCategory?: unknown;
   targetDeckId?: unknown;
   targetDate?: unknown;
+  targetMode?: unknown;
   newCardsPerDay?: unknown;
 };
 
 export type SettingsPayloadResult =
-  | { ok: true; value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; newCardsPerDay?: number } }
+  | { ok: true; value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number } }
   | { ok: false; error: string };
 
 /** Parsing tanggal YYYY-MM-DD — murni, testable tanpa DB. */
@@ -64,7 +77,7 @@ export function parseDateOnly(value: string): Date | null {
  * 1-100. targetDate: string YYYY-MM-DD yang valid.
  */
 export function validateSettingsPayload(body: SettingsPayload): SettingsPayloadResult {
-  const value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; newCardsPerDay?: number } = {};
+  const value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number } = {};
 
   if (body.targetHskLevel !== undefined) {
     const level = body.targetHskLevel;
@@ -81,7 +94,7 @@ export function validateSettingsPayload(body: SettingsPayload): SettingsPayloadR
     if (body.targetDeckId !== null && typeof body.targetDeckId !== "string") {
       return { ok: false, error: "targetDeckId harus string atau null" };
     }
-    value.targetDeckId = body.targetDeckId === null ? null : body.targetDeckId.trim();
+    value.targetDeckId = body.targetDeckId === null ? null : (body.targetDeckId as string).trim();
   }
 
   if (body.targetCategory !== undefined) {
@@ -116,6 +129,13 @@ export function validateSettingsPayload(body: SettingsPayload): SettingsPayloadR
     value.newCardsPerDay = n;
   }
 
+  if (body.targetMode !== undefined) {
+    if (body.targetMode !== "DECK" && body.targetMode !== "CARD") {
+      return { ok: false, error: "targetMode harus DECK atau CARD" };
+    }
+    value.targetMode = body.targetMode;
+  }
+
   if (body.targetDate !== undefined) {
     if (body.targetDate === null || body.targetDate === "") {
       // Null atau string kosong = clear target tanggal.
@@ -142,6 +162,7 @@ interface PrismaSettingsLike {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
+      targetMode: "DECK" | "CARD";
       newCardsPerDay: number;
     } | null>;
     upsert(args: {
@@ -152,6 +173,7 @@ interface PrismaSettingsLike {
         targetCategory?: string | null;
         targetDeckId?: string | null;
         targetDate?: Date | null;
+        targetMode?: "DECK" | "CARD";
         newCardsPerDay?: number;
       };
       update: {
@@ -159,6 +181,7 @@ interface PrismaSettingsLike {
         targetCategory?: string | null;
         targetDeckId?: string | null;
         targetDate?: Date | null;
+        targetMode?: "DECK" | "CARD";
         newCardsPerDay?: number;
       };
     }): Promise<{
@@ -167,6 +190,7 @@ interface PrismaSettingsLike {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
+      targetMode: "DECK" | "CARD";
       newCardsPerDay: number;
     }>;
   };
@@ -247,6 +271,7 @@ export async function getUserSettings(
       targetCategory: null,
       targetDeckId: null,
       targetDate: null,
+      targetMode: "DECK",
       newCardsPerDay: DEFAULT_NEW_CARDS_PER_DAY,
     };
   }
@@ -275,7 +300,7 @@ export async function hasUserSettings(
 export async function updateUserSettings(
   client: PrismaSettingsLike,
   userId: string,
-  data: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; newCardsPerDay?: number }
+  data: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number }
 ): Promise<UserSettingsData> {
   return client.userSettings.upsert({
     where: { userId },
@@ -285,6 +310,7 @@ export async function updateUserSettings(
       targetCategory: data.targetCategory ?? null,
       targetDeckId: data.targetDeckId ?? null,
       targetDate: data.targetDate ?? null,
+      targetMode: data.targetMode ?? "DECK",
       newCardsPerDay: data.newCardsPerDay ?? DEFAULT_NEW_CARDS_PER_DAY,
     },
     update: {
@@ -292,6 +318,7 @@ export async function updateUserSettings(
       ...(data.targetCategory !== undefined ? { targetCategory: data.targetCategory } : {}),
       ...(data.targetDeckId !== undefined ? { targetDeckId: data.targetDeckId } : {}),
       ...(data.targetDate !== undefined ? { targetDate: data.targetDate } : {}),
+      ...(data.targetMode !== undefined ? { targetMode: data.targetMode } : {}),
       ...(data.newCardsPerDay !== undefined ? { newCardsPerDay: data.newCardsPerDay } : {}),
     },
   });

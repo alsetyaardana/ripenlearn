@@ -22,6 +22,7 @@ function toApiShape(s: {
   targetCategory: string | null;
   targetDeckId: string | null;
   targetDate: Date | null;
+  targetMode: "DECK" | "CARD";
   newCardsPerDay: number;
 }) {
   return {
@@ -29,6 +30,7 @@ function toApiShape(s: {
     targetCategory: s.targetCategory,
     targetDeckId: s.targetDeckId,
     targetDate: s.targetDate ? s.targetDate.toISOString().slice(0, 10) : null,
+    targetMode: s.targetMode,
     newCardsPerDay: s.newCardsPerDay,
   };
 }

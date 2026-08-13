@@ -250,6 +250,11 @@ enum DeckKind {
   CUSTOM // deck berisi CustomCard milik user
 }
 
+enum TargetMode {
+  DECK
+  CARD
+}
+
 model Deck {
   id          String   @id @default(cuid())
   userId      String
@@ -500,6 +505,7 @@ model UserSettings {
   targetCategory String?
   targetDeckId   String?
   targetDate     DateTime?
+  targetMode     TargetMode @default(DECK)
   newCardsPerDay Int       @default(20)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

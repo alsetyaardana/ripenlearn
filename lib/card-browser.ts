@@ -20,6 +20,8 @@ export interface BrowseQuery {
   status: BrowseStatus;
   sort: BrowseSort;
   search: string;
+  hskLevel: number | null;
+  category: string | null;
   page: number;
   pageSize: number;
 }
@@ -60,6 +62,14 @@ function parseIntClamped(value: string | null, fallback: number, min: number, ma
   return Math.min(max, Math.max(min, n));
 }
 
+function parseIntOrNull(value: string | null, min: number, max: number): number | null {
+  if (!value) return null;
+  const n = Number.parseInt(value, 10);
+  if (Number.isNaN(n)) return null;
+  if (n < min || n > max) return null;
+  return n;
+}
+
 /** Parsing query string browser — murni, nilai tidak dikenal diabaikan. */
 export function parseBrowseQuery(params: URLSearchParams): BrowseQuery {
   // `tab` adalah alias dari `source` (global|custom); `source` menang kalau keduanya ada.
@@ -79,6 +89,8 @@ export function parseBrowseQuery(params: URLSearchParams): BrowseQuery {
     status: status && VALID_STATUSES.includes(status) ? status : "all",
     sort: sort && VALID_SORTS.includes(sort) ? sort : "hanzi",
     search,
+    hskLevel: parseIntOrNull(params.get("hskLevel"), 1, 7),
+    category: params.get("category")?.trim() || null,
     page: parseIntClamped(params.get("page"), 1, 1, Number.MAX_SAFE_INTEGER),
     // `limit` adalah alias dari `pageSize`; `pageSize` menang kalau keduanya ada.
     pageSize: parseIntClamped(
@@ -114,6 +126,8 @@ export async function getDeckBrowseCards(
     status: query.status ?? "all",
     sort: query.sort ?? "hanzi",
     search: query.search ?? "",
+    hskLevel: query.hskLevel ?? null,
+    category: query.category ?? null,
     page: query.page ?? 1,
     pageSize: query.pageSize ?? DEFAULT_PAGE_SIZE,
   };
@@ -203,6 +217,8 @@ export async function getDeckBrowseCards(
   const filtered = cards.filter((c) => {
     if (q.source !== "all" && c.source !== q.source) return false;
     if (q.status !== "all" && c.status !== q.status) return false;
+    if (q.hskLevel !== null && c.hskLevel !== q.hskLevel) return false;
+    if (q.category !== null && c.category !== q.category) return false;
     if (q.search) {
       const needle = q.search.toLowerCase();
       if (!c.hanzi.toLowerCase().includes(needle) && !c.pinyin.toLowerCase().includes(needle)) {

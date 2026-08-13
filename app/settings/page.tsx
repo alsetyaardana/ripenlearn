@@ -44,9 +44,10 @@ export default async function SettingsPage() {
                   targetDate: initial.targetDate
                     ? initial.targetDate.toISOString().slice(0, 10)
                     : "",
+                  targetMode: initial.targetMode,
                   newCardsPerDay: initial.newCardsPerDay,
                 }
-              : { targetHskLevel: null, targetCategory: null, targetDeckId: null, targetDate: "", newCardsPerDay: 20 }
+              : { targetHskLevel: null, targetCategory: null, targetDeckId: null, targetDate: "", targetMode: "DECK", newCardsPerDay: 20 }
           }
         />
       </div>

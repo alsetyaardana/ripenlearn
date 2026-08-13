@@ -35,9 +35,25 @@ type StatusFilter = "all" | CardStatus;
 
 interface CardBrowserProps {
   deckId: string;
+  deckKind?: "HSK" | "CHUNKING" | "CUSTOM";
 }
 
 const PAGE_SIZE = 30;
+
+const HSK_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+
+const CATEGORY_KEYS: Record<string, string> = {
+  daily: "deck.categoryDaily",
+  food: "deck.categoryFood",
+  travel: "deck.categoryTravel",
+  home: "deck.categoryHome",
+  health: "deck.categoryHealth",
+  money: "deck.categoryMoney",
+  work: "deck.categoryWork",
+  emotion: "deck.categoryEmotion",
+  tech: "deck.categoryTech",
+  romance: "deck.categoryRomance",
+};
 
 const STATUS_KEYS: Record<CardStatus, string> = {
   NEW: "deck.statusNew",
@@ -62,10 +78,12 @@ function formatDate(iso: string | null, lang: "id" | "en"): string {
   });
 }
 
-export default function CardBrowser({ deckId }: CardBrowserProps) {
+export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
   const { t, language } = useLanguage();
   const { speak } = useTts();
   const [search, setSearch] = useState("");
+  const [hskLevel, setHskLevel] = useState<number | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const [data, setData] = useState<BrowseResponse | null>(null);
@@ -91,6 +109,8 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
       page: String(page),
       pageSize: String(PAGE_SIZE),
     });
+    if (hskLevel !== null) params.set("hskLevel", String(hskLevel));
+    if (category !== null) params.set("category", category);
     try {
       const res = await fetch(`/api/deck/${deckId}/cards/browse?${params.toString()}`);
       if (!res.ok) throw new Error(`Failed to load cards (${res.status})`);
@@ -101,7 +121,7 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
     } finally {
       setLoading(false);
     }
-  }, [deckId, search, page, t]);
+  }, [deckId, search, hskLevel, category, page, t]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -120,17 +140,55 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
 
   return (
     <div className="flex flex-col gap-md">
-      {/* Controls — hanya search; deck sudah scoped per jenis */}
-      <input
-        value={search}
-        onChange={(e) => {
-          setPage(1);
-          setSearch(e.target.value);
-        }}
-        placeholder={t("deck.browseSearchPlaceholder")}
-        className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
-        aria-label={t("deck.browseSearchPlaceholder")}
-      />
+      {/* Controls — search + filter ringan per tipe deck */}
+      <div className="flex flex-col sm:flex-row gap-sm">
+        <input
+          value={search}
+          onChange={(e) => {
+            setPage(1);
+            setSearch(e.target.value);
+          }}
+          placeholder={t("deck.browseSearchPlaceholder")}
+          className="flex-1 px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+          aria-label={t("deck.browseSearchPlaceholder")}
+        />
+        {deckKind === "HSK" && (
+          <select
+            value={hskLevel ?? ""}
+            onChange={(e) => {
+              setPage(1);
+              setHskLevel(e.target.value === "" ? null : Number(e.target.value));
+            }}
+            className="w-full sm:w-40 px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+            aria-label={t("deck.filterHsk")}
+          >
+            <option value="">{t("deck.filterHskAll")}</option>
+            {HSK_LEVELS.map((lv) => (
+              <option key={lv} value={lv}>
+                {t("deck.filterHsk")} {lv}
+              </option>
+            ))}
+          </select>
+        )}
+        {deckKind === "CHUNKING" && (
+          <select
+            value={category ?? ""}
+            onChange={(e) => {
+              setPage(1);
+              setCategory(e.target.value === "" ? null : e.target.value);
+            }}
+            className="w-full sm:w-48 px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+            aria-label={t("deck.filterCategory")}
+          >
+            <option value="">{t("deck.filterCategoryAll")}</option>
+            {Object.keys(CATEGORY_KEYS).map((cat) => (
+              <option key={cat} value={cat}>
+                {t(CATEGORY_KEYS[cat])}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {/* Content */}
       {loading && (
@@ -164,9 +222,15 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
                   <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
                     {t("deck.colMeaning")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
-                    {t("deck.colHsk")}
-                  </th>
+                  {deckKind === "CHUNKING" ? (
+                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                      {t("deck.colCategory")}
+                    </th>
+                  ) : (
+                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                      {t("deck.colHsk")}
+                    </th>
+                  )}
                   <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
                     {t("deck.colStatus")}
                   </th>
@@ -202,9 +266,15 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
                     <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant">
                       {card.arti}
                     </td>
-                    <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant whitespace-nowrap">
-                      {card.source === "custom" && card.hskLevel === null ? "—" : `HSK ${card.hskLevel}`}
-                    </td>
+                    {deckKind === "CHUNKING" ? (
+                      <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant whitespace-nowrap">
+                        {card.category ? t(CATEGORY_KEYS[card.category] ?? card.category) : "—"}
+                      </td>
+                    ) : (
+                      <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant whitespace-nowrap">
+                        {card.source === "custom" && card.hskLevel === null ? "—" : `HSK ${card.hskLevel}`}
+                      </td>
+                    )}
                     <td className="px-md py-sm whitespace-nowrap">
                       <span
                         className={`font-label-caps text-label-caps px-sm py-xs rounded-full ${STATUS_BADGE_CLASSES[card.status]}`}
@@ -262,9 +332,13 @@ export default function CardBrowser({ deckId }: CardBrowserProps) {
                 </p>
                 <div className="flex flex-wrap gap-x-md gap-y-xs mt-sm font-body-md text-body-md text-on-surface-variant">
                   <span>
-                    {card.source === "custom" && card.hskLevel === null
-                      ? "—"
-                      : `HSK ${card.hskLevel}`}
+                    {deckKind === "CHUNKING"
+                      ? card.category
+                        ? t(CATEGORY_KEYS[card.category] ?? card.category)
+                        : "—"
+                      : card.source === "custom" && card.hskLevel === null
+                        ? "—"
+                        : `HSK ${card.hskLevel}`}
                   </span>
                   <span>
                     {t("deck.colLastReviewed")}: {formatDate(card.lastReviewedAt, language)}
