@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { useTts } from "@/lib/use-tts";
+import { numToSymbolPinyin } from "@/lib/pinyin-format";
 import type { CardStatus } from "@prisma/client";
 
 interface BrowseCard {
@@ -261,7 +262,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                       </div>
                     </td>
                     <td className="px-md py-sm font-pinyin-ruby text-pinyin-ruby text-on-surface-variant whitespace-nowrap">
-                      {card.pinyin}
+                      {card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}
                     </td>
                     <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant">
                       {card.arti}
@@ -311,7 +312,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                   <div className="min-w-0">
                     <span className="font-body-lg text-body-lg text-on-surface">{card.hanzi}</span>
                     <span className="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant ml-sm">
-                      {card.pinyin}
+                      {card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}
                     </span>
                     <button
                       aria-label="Play pronunciation"

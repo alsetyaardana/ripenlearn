@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
+import { numToSymbolPinyin } from "@/lib/pinyin-format";
 
 interface ComprehensionQuestion {
   question: string;
@@ -328,7 +329,7 @@ export default function ReadingPage() {
                     token.pinyin ? (
                       <ruby key={ti} className="pinyin-ruby-item">
                         {token.hanzi}
-                        <rt className="text-[0.9em]">{token.pinyin}</rt>
+                        <rt className="text-[0.9em]">{token.pinyin ? numToSymbolPinyin(token.pinyin) : ""}</rt>
                       </ruby>
                     ) : (
                       <span key={ti}>{token.hanzi}</span>

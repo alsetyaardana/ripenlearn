@@ -4,6 +4,7 @@
 
 import { pinyin } from "pinyin-pro";
 import { Segment, useDefault } from "segmentit";
+import { numToSymbolPinyin } from "@/lib/pinyin-format";
 
 export interface AnnotatedToken {
   /** Teks asli token — kata Mandarin, karakter tunggal, atau teks non-hanzi. */
@@ -55,6 +56,7 @@ export function annotatePassage(text: string): AnnotatedToken[] {
     const py = pinyin(w, { toneType: "num" });
     const last = py.match(/([0-9])$/)?.[1];
     const tone = last ? parseInt(last, 10) : 0;
-    return { hanzi: w, pinyin: py, tone };
+    // Tampilkan pinyin dengan simbol nada (huó dòng), bukan angka (huo4dong2).
+    return { hanzi: w, pinyin: numToSymbolPinyin(py), tone };
   });
 }

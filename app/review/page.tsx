@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { numToSymbolPinyin } from "@/lib/pinyin-format";
 import { useTts } from "@/lib/use-tts";
 
 interface ReviewCard {
@@ -172,7 +173,7 @@ export default function ReviewPage() {
                 <span className="material-symbols-outlined text-[24px]">volume_up</span>
               </button>
               <span className="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant mb-md">
-                {current.pinyin}
+                {current.pinyin ? numToSymbolPinyin(current.pinyin) : ""}
               </span>
               <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
               <div className="flex flex-col items-center gap-xs mb-lg">

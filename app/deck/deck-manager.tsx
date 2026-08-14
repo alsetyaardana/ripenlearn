@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/language-context";
+import { numToSymbolPinyin } from "@/lib/pinyin-format";
 import type { DeckSummary } from "@/lib/deck";
 import CardBrowser from "./card-browser";
 
@@ -697,7 +698,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                               />
                               <span className="font-body-lg text-body-lg text-on-surface">{card.hanzi}</span>
                               <span className="font-body-md text-body-md text-on-surface-variant">
-                                {card.pinyin}
+                                {card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}
                               </span>
                               <span className="font-body-md text-body-md text-on-surface-variant ml-auto">
                                 HSK{card.hskLevel} · {card.tipe === "SHUXIE" ? "书写" : "认读"}
