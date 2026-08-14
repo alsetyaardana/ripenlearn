@@ -164,3 +164,67 @@ export async function getMasteredCards(userId: string): Promise<MasteredCard[]> 
     artiId: p.card.artiId,
   }));
 }
+
+/**
+ * Ambil kartu MASTERED hanya dari deck yang dipilih user di Settings (targetDeckId).
+ * 3 sumber per kind deck:
+ *   - HSK      -> Card global via DeckHskCard
+ *   - CHUNKING -> DailyTalkCard via DeckChunkCard
+ *   - CUSTOM   -> CustomCard milik user
+ * Fallback: kalau tidak ada targetDeckId, pakai getMasteredCards (global).
+ */
+export async function getMasteredCardsForDeck(
+  userId: string,
+  targetDeckId: string | null
+): Promise<MasteredCard[]> {
+  if (!targetDeckId) {
+    return getMasteredCards(userId);
+  }
+
+  const deck = await prisma.deck.findUnique({
+    where: { id: targetDeckId },
+    select: { id: true, kind: true, userId: true },
+  });
+  if (!deck || deck.userId !== userId) {
+    return getMasteredCards(userId);
+  }
+
+  const [hskIds, chunkIds, customIds] = await Promise.all([
+    deck.kind === "HSK"
+      ? (await prisma.deckHskCard.findMany({ where: { deckId: deck.id }, select: { cardId: true } })).map((r) => r.cardId)
+      : Promise.resolve([] as string[]),
+    deck.kind === "CHUNKING"
+      ? (await prisma.deckChunkCard.findMany({ where: { deckId: deck.id }, select: { dailyTalkCardId: true } })).map((r) => r.dailyTalkCardId)
+      : Promise.resolve([] as string[]),
+    deck.kind === "CUSTOM"
+      ? (await prisma.customCard.findMany({ where: { deckId: deck.id }, select: { id: true } })).map((c) => c.id)
+      : Promise.resolve([] as string[]),
+  ]);
+
+  const [hskMastered, chunkMastered, customMastered] = await Promise.all([
+    hskIds.length > 0
+      ? prisma.cardProgress.findMany({
+          where: { userId, cardId: { in: hskIds }, status: CardStatus.MASTERED },
+          include: { card: true },
+        })
+      : Promise.resolve([]),
+    chunkIds.length > 0
+      ? prisma.dailyTalkProgress.findMany({
+          where: { userId, dailyTalkCardId: { in: chunkIds }, status: CardStatus.MASTERED },
+          include: { dailyTalkCard: true },
+        })
+      : Promise.resolve([]),
+    customIds.length > 0
+      ? prisma.customCardProgress.findMany({
+          where: { userId, customCardId: { in: customIds }, status: CardStatus.MASTERED },
+          include: { customCard: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return [
+    ...hskMastered.map((p) => ({ hanzi: p.card.hanzi, pinyin: p.card.pinyin, artiId: p.card.artiId })),
+    ...chunkMastered.map((p) => ({ hanzi: p.dailyTalkCard.hanzi, pinyin: p.dailyTalkCard.pinyin, artiId: p.dailyTalkCard.arti })),
+    ...customMastered.map((p) => ({ hanzi: p.customCard.hanzi, pinyin: p.customCard.pinyin, artiId: p.customCard.arti })),
+  ];
+}

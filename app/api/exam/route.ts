@@ -7,7 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkQuota, QuotaExceededError } from "@/lib/quota";
 import { generateExamQuestions } from "@/lib/ai";
-import { getMasteredCards } from "@/lib/fsrs";
+import { getMasteredCardsForDeck } from "@/lib/fsrs";
+import { getUserSettings } from "@/lib/settings";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -36,10 +38,9 @@ export async function POST(req: NextRequest) {
   //   butuh mapping soal -> cardId yang belum ada di struktur ExamQuestion saat ini.
 
   try {
-    // Whitelist vocab: fallback "semua Card mastered lintas deck" (belum ada konsep
-    // active deck sampai Fase 1.5 selesai — lihat lib/deck.ts). Ganti ke deck-scoped
-    // begitu Fase 1.5 (custom deck) landing.
-    const masteredWords = await getMasteredCards(userId);
+    // Whitelist vocab: deck yang dipilih di Settings (targetDeckId). Fallback global.
+    const settings = await getUserSettings(prisma, userId);
+    const masteredWords = await getMasteredCardsForDeck(userId, settings.targetDeckId);
     const exam = await generateExamQuestions(masteredWords);
     return NextResponse.json(exam);
   } catch (err) {

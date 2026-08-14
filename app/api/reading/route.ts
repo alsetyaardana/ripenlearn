@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkQuota, QuotaExceededError } from "@/lib/quota";
 import { generateReadingPassage } from "@/lib/ai";
-import { getMasteredCards } from "@/lib/fsrs";
+import { getMasteredCardsForDeck } from "@/lib/fsrs";
+import { getUserSettings } from "@/lib/settings";
 import { annotatePassage } from "@/lib/pinyin-annotate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -33,14 +34,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Whitelist vocab: fallback "semua Card mastered lintas deck" (belum ada konsep
-    // active deck sampai Fase 1.5 selesai — lihat lib/deck.ts). Ganti ke deck-scoped
-    // begitu Fase 1.5 (custom deck) landing.
+    // Whitelist vocab: deck yang dipilih di Settings (targetDeckId). Fallback global.
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     const topic =
       typeof body?.topic === "string" && body.topic.trim() ? body.topic.trim() : undefined;
 
-    const masteredWords = await getMasteredCards(userId);
+    const settings = await getUserSettings(prisma, userId);
+    const masteredWords = await getMasteredCardsForDeck(userId, settings.targetDeckId);
     const reading = await generateReadingPassage(masteredWords, topic);
     const tokens = annotatePassage(reading.passage);
 

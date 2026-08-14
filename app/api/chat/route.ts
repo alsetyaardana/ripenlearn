@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkQuota, QuotaExceededError } from "@/lib/quota";
 import { chatWithConstrainedVocab } from "@/lib/ai";
-import { getMasteredCards } from "@/lib/fsrs";
+import { getMasteredCardsForDeck } from "@/lib/fsrs";
+import { getUserSettings } from "@/lib/settings";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -39,7 +41,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const masteredWords = await getMasteredCards(userId);
+    // Vocab source: deck yang dipilih di Settings (targetDeckId). Fallback global.
+    const settings = await getUserSettings(prisma, userId);
+    const masteredWords = await getMasteredCardsForDeck(userId, settings.targetDeckId);
     const reply = await chatWithConstrainedVocab(masteredWords, message);
     return NextResponse.json({ reply });
   } catch (err) {
