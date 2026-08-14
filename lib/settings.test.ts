@@ -29,7 +29,7 @@ function makeFakePrisma() {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
-      targetMode?: "DECK" | "CARD";
+      targetMode?: "DATE" | "RATE";
       newCardsPerDay: number;
     }
   >();

@@ -22,7 +22,7 @@ export interface UserSettingsData {
   targetCategory: string | null;
   targetDeckId: string | null;
   targetDate: Date | null;
-  targetMode: "DECK" | "CARD";
+  targetMode: "DATE" | "RATE";
   newCardsPerDay: number;
 }
 
@@ -49,7 +49,7 @@ export type SettingsPayload = {
 };
 
 export type SettingsPayloadResult =
-  | { ok: true; value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number } }
+  | { ok: true; value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DATE" | "RATE"; newCardsPerDay?: number } }
   | { ok: false; error: string };
 
 /** Parsing tanggal YYYY-MM-DD — murni, testable tanpa DB. */
@@ -77,7 +77,7 @@ export function parseDateOnly(value: string): Date | null {
  * 1-100. targetDate: string YYYY-MM-DD yang valid.
  */
 export function validateSettingsPayload(body: SettingsPayload): SettingsPayloadResult {
-  const value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number } = {};
+  const value: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DATE" | "RATE"; newCardsPerDay?: number } = {};
 
   if (body.targetHskLevel !== undefined) {
     const level = body.targetHskLevel;
@@ -130,7 +130,7 @@ export function validateSettingsPayload(body: SettingsPayload): SettingsPayloadR
   }
 
   if (body.targetMode !== undefined) {
-    if (body.targetMode !== "DECK" && body.targetMode !== "CARD") {
+    if (body.targetMode !== "DATE" && body.targetMode !== "RATE") {
       return { ok: false, error: "targetMode harus DECK atau CARD" };
     }
     value.targetMode = body.targetMode;
@@ -162,7 +162,7 @@ interface PrismaSettingsLike {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
-      targetMode: "DECK" | "CARD";
+      targetMode: "DATE" | "RATE";
       newCardsPerDay: number;
     } | null>;
     upsert(args: {
@@ -173,7 +173,7 @@ interface PrismaSettingsLike {
         targetCategory?: string | null;
         targetDeckId?: string | null;
         targetDate?: Date | null;
-        targetMode?: "DECK" | "CARD";
+        targetMode?: "DATE" | "RATE";
         newCardsPerDay?: number;
       };
       update: {
@@ -181,7 +181,7 @@ interface PrismaSettingsLike {
         targetCategory?: string | null;
         targetDeckId?: string | null;
         targetDate?: Date | null;
-        targetMode?: "DECK" | "CARD";
+        targetMode?: "DATE" | "RATE";
         newCardsPerDay?: number;
       };
     }): Promise<{
@@ -190,7 +190,7 @@ interface PrismaSettingsLike {
       targetCategory: string | null;
       targetDeckId: string | null;
       targetDate: Date | null;
-      targetMode: "DECK" | "CARD";
+      targetMode: "DATE" | "RATE";
       newCardsPerDay: number;
     }>;
   };
@@ -271,7 +271,7 @@ export async function getUserSettings(
       targetCategory: null,
       targetDeckId: null,
       targetDate: null,
-      targetMode: "DECK",
+      targetMode: "DATE",
       newCardsPerDay: DEFAULT_NEW_CARDS_PER_DAY,
     };
   }
@@ -300,7 +300,7 @@ export async function hasUserSettings(
 export async function updateUserSettings(
   client: PrismaSettingsLike,
   userId: string,
-  data: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DECK" | "CARD"; newCardsPerDay?: number }
+  data: { targetHskLevel?: number | null; targetCategory?: string | null; targetDeckId?: string | null; targetDate?: Date | null; targetMode?: "DATE" | "RATE"; newCardsPerDay?: number }
 ): Promise<UserSettingsData> {
   return client.userSettings.upsert({
     where: { userId },
@@ -310,7 +310,7 @@ export async function updateUserSettings(
       targetCategory: data.targetCategory ?? null,
       targetDeckId: data.targetDeckId ?? null,
       targetDate: data.targetDate ?? null,
-      targetMode: data.targetMode ?? "DECK",
+      targetMode: data.targetMode ?? "DATE",
       newCardsPerDay: data.newCardsPerDay ?? DEFAULT_NEW_CARDS_PER_DAY,
     },
     update: {
@@ -347,6 +347,61 @@ export function estimateCompletionDate(input: {
   estimatedDate.setDate(estimatedDate.getDate() + daysRemaining);
 
   return { daysRemaining, estimatedDate };
+}
+
+/**
+ * Estimasi rencana belajar berdasarkan mode target:
+ * - mode "DATE": user pilih tanggal target -> berapa kartu per hari dibutuhkan
+ *   (sisa kartu / hari tersisa). Kalau rate > MAX_NEW_CARDS_PER_DAY, tandai "tidak realistis".
+ * - mode "RATE": user pilih kartu per hari -> berapa hari + tanggal estimasi selesai.
+ * Murni fungsi, testable tanpa DB.
+ */
+export type PlanEstimate =
+  | {
+      mode: "DATE";
+      targetDate: Date;
+      daysRemaining: number;
+      requiredPerDay: number;
+      unrealistic: boolean;
+    }
+  | {
+      mode: "RATE";
+      perDay: number;
+      daysRemaining: number;
+      estimatedDate: Date;
+    };
+
+export function estimatePlan(input: {
+  mode: "DATE" | "RATE";
+  totalRemainingCards: number;
+  targetDate?: Date | null;
+  newCardsPerDay?: number;
+}): PlanEstimate {
+  const remaining = Math.max(0, Math.floor(input.totalRemainingCards));
+
+  if (input.mode === "DATE" && input.targetDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(input.targetDate);
+    target.setHours(0, 0, 0, 0);
+    const daysRemaining = Math.max(1, Math.ceil((target.getTime() - today.getTime()) / 86_400_000));
+    const requiredPerDay = Math.ceil(remaining / daysRemaining);
+    return {
+      mode: "DATE",
+      targetDate: target,
+      daysRemaining,
+      requiredPerDay,
+      unrealistic: requiredPerDay > MAX_NEW_CARDS_PER_DAY,
+    };
+  }
+
+  // mode RATE (default)
+  const perDay = Math.max(1, Math.floor(input.newCardsPerDay ?? 10));
+  const daysRemaining = Math.ceil(remaining / perDay);
+  const estimatedDate = new Date();
+  estimatedDate.setHours(0, 0, 0, 0);
+  estimatedDate.setDate(estimatedDate.getDate() + daysRemaining);
+  return { mode: "RATE", perDay, daysRemaining, estimatedDate };
 }
 
 // ============================================================

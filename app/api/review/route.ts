@@ -14,6 +14,7 @@ import { type ReviewRating } from "@/lib/fsrs";
 import { getUserSettings } from "@/lib/settings";
 import { getDailyNewCardLimit } from "@/lib/review-limit";
 import { reviewCardForUser, DeckNotFoundError } from "@/lib/deck";
+import { recordStudyDay } from "@/lib/streak";
 
 // Session.user belum di-augment lewat next-auth.d.ts (id/tier ditambah runtime di
 // lib/auth.ts callback session()) — cast eksplisit di sini sampai type augmentation
@@ -310,6 +311,8 @@ export async function POST(req: NextRequest) {
       source: sourceNorm,
       cardId,
     }, rating);
+    // Catat hari belajar untuk streak (best-effort — gagal tidak memblokir rating).
+    await recordStudyDay(prisma, userId, 1).catch(() => {});
     return NextResponse.json({ progress: updated });
   } catch (err) {
     if (err instanceof DeckNotFoundError) {

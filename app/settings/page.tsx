@@ -47,7 +47,7 @@ export default async function SettingsPage() {
                   targetMode: initial.targetMode,
                   newCardsPerDay: initial.newCardsPerDay,
                 }
-              : { targetHskLevel: null, targetCategory: null, targetDeckId: null, targetDate: "", targetMode: "DECK", newCardsPerDay: 20 }
+              : { targetHskLevel: null, targetCategory: null, targetDeckId: null, targetDate: "", targetMode: "DATE", newCardsPerDay: 20 }
           }
         />
       </div>

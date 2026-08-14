@@ -14,7 +14,7 @@ interface SettingsFormProps {
     targetCategory: string | null;
     targetDeckId: string | null;
     targetDate: string;
-    targetMode: "DECK" | "CARD";
+    targetMode: "DATE" | "RATE";
     newCardsPerDay: number;
   };
 }
@@ -51,7 +51,7 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
   const [targetCategory, setTargetCategory] = useState<string | null>(initial.targetCategory);
   const [targetDeckId, setTargetDeckId] = useState<string | null>(initial.targetDeckId);
   const [targetDate, setTargetDate] = useState(initial.targetDate);
-  const [targetMode, setTargetMode] = useState<"DECK" | "CARD">(initial.targetMode);
+  const [targetMode, setTargetMode] = useState<"DATE" | "RATE">(initial.targetMode);
   const [newCardsPerDay, setNewCardsPerDay] = useState(initial.newCardsPerDay);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -206,47 +206,49 @@ export default function SettingsForm({ decks, initial }: SettingsFormProps) {
             </p>
             <select
               value={targetMode}
-              onChange={(e) => setTargetMode(e.target.value === "CARD" ? "CARD" : "DECK")}
+              onChange={(e) => setTargetMode(e.target.value === "RATE" ? "RATE" : "DATE")}
               className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
             >
-              <option value="DECK">{t("settings.targetModeDeck")}</option>
-              <option value="CARD">{t("settings.targetModeCard")}</option>
+              <option value="DATE">{t("settings.targetModeDeck")}</option>
+              <option value="RATE">{t("settings.targetModeCard")}</option>
             </select>
           </div>
 
-          <div>
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-xs">{t("settings.targetDate")}</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-md">
-              {t("settings.targetDateDesc")}
-            </p>
-            <input
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
-            />
-          </div>
-
-          <div>
-            <h3 className="font-headline-sm text-headline-sm text-primary mb-xs">{t("settings.newCardsPerDay")}</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-md">
-              {t("settings.newCardsDesc")}
-            </p>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={newCardsPerDay}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (Number.isFinite(v)) setNewCardsPerDay(Math.min(100, Math.max(1, Math.floor(v))));
-              }}
-              className="w-full sm:w-40 px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
-            />
-            <p className="font-body-md text-body-md text-on-surface-variant mt-sm text-sm">
-              {t("settings.perDay", { n: newCardsPerDay, week: newCardsPerDay * 7 })}
-            </p>
-          </div>
+          {targetMode === "DATE" ? (
+            <div>
+              <h3 className="font-headline-sm text-headline-sm text-primary mb-xs">{t("settings.targetDate")}</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-md">
+                {t("settings.targetDateDesc")}
+              </p>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+              />
+            </div>
+          ) : (
+            <div>
+              <h3 className="font-headline-sm text-headline-sm text-primary mb-xs">{t("settings.newCardsPerDay")}</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-md">
+                {t("settings.newCardsDesc")}
+              </p>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={newCardsPerDay}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v)) setNewCardsPerDay(Math.min(100, Math.max(1, Math.floor(v))));
+                }}
+                className="w-full sm:w-40 px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+              />
+              <p className="font-body-md text-body-md text-on-surface-variant mt-sm text-sm">
+                {t("settings.perDay", { n: newCardsPerDay, week: newCardsPerDay * 7 })}
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
