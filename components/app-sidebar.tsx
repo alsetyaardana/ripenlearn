@@ -50,7 +50,7 @@ function isActive(pathname: string, href: string) {
 export default function AppSidebar({ name, image, tier, role }: AppSidebarProps) {
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useSidebar();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t } = useLanguage();
   const isAdmin = role === "ADMIN";
   const allItems = getNavItems(t, isAdmin);
 
@@ -107,14 +107,8 @@ export default function AppSidebar({ name, image, tier, role }: AppSidebarProps)
           })}
         </nav>
 
-        {/* Bottom: Language toggle + Logout */}
+        {/* Bottom: Logout */}
         <div className={`pb-4 ${collapsed ? "px-1.5" : "px-2"} flex flex-col gap-0.5`}>
-          <button onClick={toggleLanguage}
-            className={`flex items-center gap-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors ${collapsed ? "justify-center" : "px-3"}`}
-            title={language === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia"}>
-            <span className="material-symbols-outlined text-[20px]">language</span>
-            {!collapsed && <span className="font-body-sm text-body-sm">{language === "id" ? "English" : "Indonesia"}</span>}
-          </button>
           <a href="/api/auth/signout"
             className={`flex items-center gap-2 py-2 rounded-lg text-on-surface-variant hover:bg-error-container hover:text-error transition-colors ${collapsed ? "justify-center" : "px-3"}`}
             title={t("nav.logout")}>
@@ -125,7 +119,7 @@ export default function AppSidebar({ name, image, tier, role }: AppSidebarProps)
       </aside>
 
       {/* ── Mobile bottom nav ── */}
-      {/* Mobile: Dashboard, Review, Chat, More(Langit+Deck+Tones+Exam+Settings+Language+Logout) */}
+      {/* Mobile: Dashboard, Review, Chat, More(Deck+Tones+Exam+Settings+Logout) */}
       <nav className="md:hidden fixed inset-x-0 bottom-0 bg-surface-container-lowest border-t border-outline-variant/30 z-40 flex flex-col">
         <div className="flex items-center justify-around h-14 px-1">
           {/* First 3 items always visible */}
@@ -140,7 +134,7 @@ export default function AppSidebar({ name, image, tier, role }: AppSidebarProps)
             );
           })}
           {/* More button — click to toggle, not hover */}
-          <MobileMoreMenu allItems={allItems.slice(3)} pathname={pathname} t={t} language={language} toggleLanguage={toggleLanguage} />
+          <MobileMoreMenu allItems={allItems.slice(3)} pathname={pathname} t={t} />
         </div>
       </nav>
     </>
@@ -148,12 +142,10 @@ export default function AppSidebar({ name, image, tier, role }: AppSidebarProps)
 }
 
 // Separate client component for mobile More menu (click-to-toggle)
-function MobileMoreMenu({ allItems, pathname, t, language, toggleLanguage }: {
+function MobileMoreMenu({ allItems, pathname, t }: {
   allItems: { href: string; icon: string; label: string }[];
   pathname: string;
   t: (key: string) => string;
-  language: string;
-  toggleLanguage: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   return (
@@ -175,11 +167,6 @@ function MobileMoreMenu({ allItems, pathname, t, language, toggleLanguage }: {
             );
           })}
           <div className="border-t border-outline-variant/30 mt-1 pt-1">
-            <button onClick={() => { toggleLanguage(); setOpen(false); }}
-              className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container w-full text-left">
-              <span className="material-symbols-outlined text-[18px]">language</span>
-              {language === "id" ? "English" : "Indonesia"}
-            </button>
             <a href="/api/auth/signout"
               className="flex items-center gap-2 px-3 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error">
               <span className="material-symbols-outlined text-[18px]">logout</span>

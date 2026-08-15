@@ -156,7 +156,7 @@ export default function ReadingPage() {
   }, []);
 
   return (
-    <main className="w-full max-w-[680px] flex flex-col mx-auto min-h-screen px-md py-lg md:py-xl">
+    <main className="w-full max-w-[900px] flex flex-col mx-auto min-h-screen px-md py-lg md:py-xl">
       <header className="w-full flex items-center justify-between mb-lg">
         <button
           aria-label="Back to Dashboard"
@@ -324,12 +324,12 @@ export default function ReadingPage() {
             </div>
             <p className="font-body-lg text-body-lg text-on-surface leading-loose whitespace-pre-wrap">
               {showPinyin && reading.tokens ? (
-                <span className="pinyin-ruby text-pinyin-ruby">
+                <span className="pinyin-ruby">
                   {reading.tokens.map((token, ti) =>
                     token.pinyin ? (
                       <ruby key={ti} className="pinyin-ruby-item">
                         {token.hanzi}
-                        <rt className="text-[0.9em]">{token.pinyin ? numToSymbolPinyin(token.pinyin) : ""}</rt>
+                        <rt className="text-[1em]">{token.pinyin ? numToSymbolPinyin(token.pinyin) : ""}</rt>
                       </ruby>
                     ) : (
                       <span key={ti}>{token.hanzi}</span>

@@ -1,11 +1,9 @@
 // contexts/language-context.tsx
-// React context for language switching. Persisted via localStorage.
+// React context for language. App locked to Bahasa Indonesia — no switching.
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { type Language, t as translate, translations } from "@/lib/i18n";
-
-const STORAGE_KEY = "ripen-lang";
+import { createContext, useCallback, useContext } from "react";
+import { type Language, t as translate } from "@/lib/i18n";
 
 interface LanguageContextValue {
   language: Language;
@@ -16,30 +14,10 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("id");
-
-  // Hydrate from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "id" || stored === "en") {
-        setLanguage(stored);
-      }
-    } catch {
-      // SSR or storage unavailable
-    }
-  }, []);
+  const language: Language = "id";
 
   const toggleLanguage = useCallback(() => {
-    setLanguage((prev) => {
-      const next: Language = prev === "id" ? "en" : "id";
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // ignore
-      }
-      return next;
-    });
+    // App locked to Bahasa Indonesia — no-op kept for API compatibility.
   }, []);
 
   const t = useCallback(

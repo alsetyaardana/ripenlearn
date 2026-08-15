@@ -50,7 +50,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Load session list on mount
@@ -102,7 +102,7 @@ export default function ChatPage() {
   const loadSession = useCallback(async (id: string) => {
     setActiveId(id);
     setError(null);
-    setDrawerOpen(false);
+    setHistoryOpen(false);
     try {
       const res = await fetch(`/api/chat/sessions/${id}`);
       if (!res.ok) return;
@@ -121,7 +121,7 @@ export default function ChatPage() {
     setMessages([]);
     setInput("");
     setError(null);
-    setDrawerOpen(false);
+    setHistoryOpen(false);
   }, []);
 
   const deleteSession = useCallback(
@@ -213,16 +213,9 @@ export default function ChatPage() {
   );
 
   return (
-    <main className="w-full max-w-[680px] flex flex-col mx-auto min-h-screen px-md py-lg md:py-xl">
+    <main className="w-full max-w-[900px] flex flex-col mx-auto min-h-screen px-md py-lg md:py-xl">
       <header className="w-full flex items-center justify-between mb-lg">
         <div className="flex items-center gap-sm">
-          <button
-            aria-label="Toggle chat history"
-            onClick={() => setDrawerOpen((v) => !v)}
-            className="flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant md:hidden"
-          >
-            <span className="material-symbols-outlined text-[24px]">menu</span>
-          </button>
           <button
             aria-label="Back to Dashboard"
             onClick={() => router.push("/dashboard")}
@@ -235,82 +228,86 @@ export default function ChatPage() {
           <span className="material-symbols-outlined text-primary">forum</span>
           <h1 className="font-headline-md text-headline-md text-primary">{t("chat.title")}</h1>
         </div>
-        <button
-          aria-label={t("chat.newChat")}
-          onClick={startNewChat}
-          className="flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-primary"
-        >
-          <span className="material-symbols-outlined text-[24px]">add_comment</span>
-        </button>
+        <div className="flex items-center gap-sm">
+          <button
+            aria-label={t("chat.chatHistory")}
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-primary"
+          >
+            <span className="material-symbols-outlined text-[24px]">history</span>
+          </button>
+          <button
+            aria-label={t("chat.newChat")}
+            onClick={startNewChat}
+            className="flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-primary"
+          >
+            <span className="material-symbols-outlined text-[24px]">add_comment</span>
+          </button>
+        </div>
       </header>
 
-      {/* Session drawer (mobile: overlay; md+: inline sidebar) */}
-      {drawerOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setDrawerOpen(false)}
-        />
-      )}
-
-      <div className="flex gap-md flex-1 min-h-0">
-        <aside
-          className={`fixed z-50 top-0 left-0 h-full w-[280px] bg-surface-container-low border-r border-unripe-pale p-md flex flex-col gap-sm transition-transform md:static md:z-auto md:translate-x-0 md:bg-transparent md:border-r-0 md:p-0 md:w-[220px] md:flex-shrink-0 ${
-            drawerOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="flex items-center justify-between mb-sm">
-            <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">
-              {t("chat.chatHistory")}
-            </span>
-            <button
-              aria-label={t("chat.newChat")}
-              onClick={startNewChat}
-              className="flex items-center gap-xs text-primary font-label-caps text-label-caps hover:text-on-surface transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              {t("chat.newChat")}
-            </button>
-          </div>
-
-          {sessions.length === 0 && (
-            <p className="font-body-md text-body-md text-on-surface-variant text-sm">
-              {t("chat.noChats")}
-            </p>
-          )}
-
-          <div className="flex flex-col gap-sm overflow-y-auto">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`group flex items-center gap-xs rounded-lg px-sm py-xs cursor-pointer transition-colors ${
-                  activeId === s.id
-                    ? "bg-primary-container text-on-primary-container"
-                    : "hover:bg-surface-variant text-on-surface"
-                }`}
-                onClick={() => loadSession(s.id)}
-              >
-                <span className="material-symbols-outlined text-[18px] flex-shrink-0">chat</span>
-              <span className="flex-1 truncate font-body-md text-body-md text-sm">{s.title}</span>
+      {/* History drawer (right side) */}
+      {historyOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setHistoryOpen(false)}
+          />
+          <aside className="fixed z-50 top-0 right-0 h-full w-[300px] bg-surface-container-low border-l border-unripe-pale p-md flex flex-col gap-sm shadow-xl">
+            <div className="flex items-center justify-between mb-sm">
+              <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">
+                {t("chat.chatHistory")}
+              </span>
               <button
-                aria-label={t("chat.deleteChat")}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteSession(s.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-xs text-on-surface-variant hover:text-error"
+                aria-label="Close history"
+                onClick={() => setHistoryOpen(false)}
+                className="flex items-center justify-center p-xs rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
               >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-          ))}
-        </div>
-      </aside>
 
-      {/* Chat column (mobile: h-[calc(100dvh-120px)]; md+: grows beside sidebar) */}
-      <div className="flex flex-col flex-1 min-h-0 md:h-auto">
+            {sessions.length === 0 && (
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                {t("chat.noChats")}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-sm overflow-y-auto">
+              {sessions.map((s) => (
+                <div
+                  key={s.id}
+                  className={`group flex items-center gap-xs rounded-lg px-sm py-xs cursor-pointer transition-colors ${
+                    activeId === s.id
+                      ? "bg-primary-container text-on-primary-container"
+                      : "hover:bg-surface-variant text-on-surface"
+                  }`}
+                  onClick={() => loadSession(s.id)}
+                >
+                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">chat</span>
+                  <span className="flex-1 truncate font-body-md text-body-md text-sm">{s.title}</span>
+                  <button
+                    aria-label={t("chat.deleteChat")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteSession(s.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-xs text-on-surface-variant hover:text-error"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </>
+      )}
+
+      {/* Chat column */}
+      <div className="flex flex-col flex-1 min-h-0">
         <div
           ref={listRef}
-          className="h-[calc(100dvh-120px)] md:h-auto md:min-h-[50vh] flex-1 overflow-y-auto flex flex-col gap-md bg-surface-container-low rounded-xl border border-unripe-pale p-md mb-md"
+          className="h-[calc(100dvh-120px)] flex-1 overflow-y-auto flex flex-col gap-md bg-surface-container-low rounded-xl border border-unripe-pale p-md mb-md"
         >
         {messages.length === 0 && (
           <div className="flex flex-col gap-md items-center my-auto text-center">
@@ -397,7 +394,6 @@ export default function ChatPage() {
           <span className="material-symbols-outlined">send</span>
         </button>
         </div>
-      </div>
       </div>
     </main>
   );

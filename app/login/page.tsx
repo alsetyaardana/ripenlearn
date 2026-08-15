@@ -13,7 +13,7 @@ type Tab = "register" | "google";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("register");
@@ -235,12 +235,6 @@ function LoginContent() {
 
         {error && <p className="font-body-md text-body-md text-error">{error}</p>}
 
-        <button
-          onClick={toggleLanguage}
-          className="text-on-surface-variant hover:text-primary transition-colors text-sm underline"
-        >
-          {language === "id" ? "English" : "Indonesia"}
-        </button>
       </div>
     </main>
   );
