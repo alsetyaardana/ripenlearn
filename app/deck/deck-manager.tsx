@@ -76,10 +76,18 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
   const [curriculumKind, setCurriculumKind] = useState<CurriculumKind>("hsk");
   const [hskLevels, setHskLevels] = useState<HskLevelEntry[]>([]);
   const [categories, setCategories] = useState<CategoryEntry[]>([]);
+  const [materialsLoaded, setMaterialsLoaded] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<number[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [addingLevels, setAddingLevels] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Form kartu custom (POST /api/deck/[deckId]/custom)
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customHanzi, setCustomHanzi] = useState("");
+  const [customPinyin, setCustomPinyin] = useState("");
+  const [customArti, setCustomArti] = useState("");
+  const [addingCustom, setAddingCustom] = useState(false);
 
   // Indeterminate checkbox "pilih semua level"
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -157,6 +165,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
     setConfirmingDeleteId(null);
     setSuccessMsg(null);
     setError(null);
+    setShowCustomForm(false);
   }, []);
 
   // Muat materi (level HSK / kategori Daily Talk) sesuai deck yang dibuka.
@@ -165,6 +174,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
       setCurriculumKind("hsk");
       setHskLevels([]);
       setCategories([]);
+      setMaterialsLoaded(false);
       setSelectedLevels([]);
       setSelectedCategories([]);
       return;
@@ -173,6 +183,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
     setCurriculumKind("hsk");
     setHskLevels([]);
     setCategories([]);
+    setMaterialsLoaded(false);
     setSelectedLevels([]);
     setSelectedCategories([]);
     fetch(`/api/deck/levels?deckId=${encodeURIComponent(modalDeck.id)}`)
@@ -188,12 +199,14 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
           setCurriculumKind(data.kind);
           if (data.kind === "category") setCategories(data.categories ?? []);
           else setHskLevels(data.levels ?? []);
+          setMaterialsLoaded(true);
         }
       )
       .catch(() => {
         if (!cancelled) {
           setHskLevels([]);
           setCategories([]);
+          setMaterialsLoaded(true);
         }
       });
     return () => {
@@ -331,6 +344,39 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
       setAdding(false);
     }
   }, [modalDeck, selectedIds, adding, refreshDecks, t]);
+
+  const addCustomCard = useCallback(async () => {
+    if (!modalDeck || addingCustom) return;
+    const hanzi = customHanzi.trim();
+    const pinyin = customPinyin.trim();
+    const arti = customArti.trim();
+    if (!hanzi || !pinyin || !arti) return;
+    setAddingCustom(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/deck/${modalDeck.id}/custom`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hanzi, pinyin, arti }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? t("deck.errorAddCustom"));
+        return;
+      }
+      setCustomHanzi("");
+      setCustomPinyin("");
+      setCustomArti("");
+      setShowCustomForm(false);
+      setSuccessMsg(t("deck.successAdded", { count: 1 }));
+      await refreshDecks();
+    } catch {
+      setError(t("deck.errorAddCustom"));
+    } finally {
+      setAddingCustom(false);
+    }
+  }, [modalDeck, addingCustom, customHanzi, customPinyin, customArti, refreshDecks, t]);
 
   const toggleCard = useCallback((id: string) => {
     setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -471,6 +517,12 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                 </p>
               </div>
               <div className="flex items-center gap-sm">
+                <button
+                  onClick={() => setShowCustomForm((cur) => !cur)}
+                  className="px-md py-sm rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface-variant hover:bg-surface-variant transition-colors"
+                >
+                  {t("deck.addCustomCardBtn")}
+                </button>
                 {modalView === "picker" ? (
                   <button
                     onClick={() => setModalView("browse")}
@@ -510,6 +562,41 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                 </p>
               )}
 
+              {showCustomForm && (
+                <div className="mb-md border border-outline-variant/40 rounded-lg p-md bg-surface-container-lowest">
+                  <h3 className="font-headline-md text-headline-md text-on-surface-variant mb-sm">
+                    {t("deck.addCustomCard")}
+                  </h3>
+                  <div className="flex flex-col gap-sm">
+                    <input
+                      value={customHanzi}
+                      onChange={(e) => setCustomHanzi(e.target.value)}
+                      placeholder={t("deck.hanziRequired")}
+                      className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+                    />
+                    <input
+                      value={customPinyin}
+                      onChange={(e) => setCustomPinyin(e.target.value)}
+                      placeholder={t("deck.pinyinRequired")}
+                      className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+                    />
+                    <input
+                      value={customArti}
+                      onChange={(e) => setCustomArti(e.target.value)}
+                      placeholder={t("deck.meaningRequired")}
+                      className="w-full px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-body-md"
+                    />
+                    <button
+                      onClick={addCustomCard}
+                      disabled={addingCustom}
+                      className="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm disabled:opacity-40"
+                    >
+                      {addingCustom ? t("deck.saving") : t("deck.addCustomCardBtn")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {modalView === "browse" ? (
                 <CardBrowser deckId={modalDeck.id} deckKind={modalDeck.kind} />
               ) : (
@@ -523,9 +610,13 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                         {t("deck.addFromCategoryDesc")}
                       </p>
 
-                      {categories.length === 0 ? (
+                      {!materialsLoaded ? (
                         <p className="font-body-md text-body-md text-on-surface-variant mb-sm">
                           {t("deck.loadingMaterials")}
+                        </p>
+                      ) : categories.length === 0 ? (
+                        <p className="font-body-md text-body-md text-on-surface-variant mb-sm">
+                          {t("deck.allMaterialsAdded")}
                         </p>
                       ) : (
                         <>
@@ -595,9 +686,13 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                         {t("deck.addFromHSKDesc")}
                       </p>
 
-                      {hskLevels.length === 0 ? (
+                      {!materialsLoaded ? (
                         <p className="font-body-md text-body-md text-on-surface-variant mb-sm">
                           {t("deck.loadingLevels")}
+                        </p>
+                      ) : hskLevels.length === 0 ? (
+                        <p className="font-body-md text-body-md text-on-surface-variant mb-sm">
+                          {t("deck.allMaterialsAdded")}
                         </p>
                       ) : (
                         <>

@@ -314,12 +314,15 @@ export default function ReadingPage() {
                   />
                   {t("reading.showPinyin")}
                 </label>
-                <button
-                  onClick={() => setShowTranslation((v) => !v)}
-                  className="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors"
-                >
-                  {showTranslation ? t("reading.hideTranslation") : t("reading.showTranslation")}
-                </button>
+                <label className="flex items-center gap-xs cursor-pointer font-label-caps text-label-caps text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={showTranslation}
+                    onChange={(e) => setShowTranslation(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  {t("reading.showTranslation")}
+                </label>
               </div>
             </div>
             <p className="font-body-lg text-body-lg text-on-surface leading-loose whitespace-pre-wrap">

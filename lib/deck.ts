@@ -270,6 +270,91 @@ export async function addCategoryToDeck(
   return { added: cards.length };
 }
 
+/** Hapus subset Card global (HSK) dari deck. Hanya hapus join row — Card global & progress user tidak tersentuh. */
+export async function removeCardsFromDeck(
+  client: DeckClient,
+  deckId: string,
+  userId: string,
+  cardIds: string[]
+): Promise<{ removed: number }> {
+  await assertDeckOwnership(client, deckId, userId);
+  const result = await client.deckHskCard.deleteMany({
+    where: { deckId, cardId: { in: cardIds } },
+  });
+  return { removed: result.count };
+}
+
+/** Hapus subset DailyTalkCard dari deck CHUNKING. Hanya join row — DailyTalkCard & progress user tidak tersentuh. */
+export async function removeChunkCardsFromDeck(
+  client: DeckClient,
+  deckId: string,
+  userId: string,
+  dailyTalkCardIds: string[]
+): Promise<{ removed: number }> {
+  await assertDeckOwnership(client, deckId, userId);
+  const result = await client.deckChunkCard.deleteMany({
+    where: { deckId, dailyTalkCardId: { in: dailyTalkCardIds } },
+  });
+  return { removed: result.count };
+}
+
+/** Hapus SEMUA DailyTalkCard satu kategori dari deck. */
+export async function removeCategoryFromDeck(
+  client: DeckClient,
+  deckId: string,
+  userId: string,
+  category: string
+): Promise<{ removed: number }> {
+  const cards = await client.dailyTalkCard.findMany({
+    where: { category },
+    select: { id: true },
+  });
+  if (cards.length === 0) return { removed: 0 };
+  return removeChunkCardsFromDeck(
+    client,
+    deckId,
+    userId,
+    cards.map((c) => c.id)
+  );
+}
+
+/** Hapus SEMUA Card global pada level HSK tertentu dari deck. */
+export async function removeHskLevelFromDeck(
+  client: DeckClient,
+  deckId: string,
+  userId: string,
+  hskLevels: number[]
+): Promise<{ removed: number }> {
+  const cards = await client.card.findMany({
+    where: { hskLevel: { in: hskLevels } },
+    select: { id: true },
+  });
+  if (cards.length === 0) return { removed: 0 };
+  return removeCardsFromDeck(
+    client,
+    deckId,
+    userId,
+    cards.map((c) => c.id)
+  );
+}
+
+/** Hapus custom card milik user dari deck (row CustomCard + CustomCardProgress-nya). */
+export async function removeCustomCardsFromDeck(
+  client: DeckClient,
+  deckId: string,
+  userId: string,
+  customCardIds: string[]
+): Promise<{ removed: number }> {
+  await assertDeckOwnership(client, deckId, userId);
+  const progress = await client.customCardProgress.deleteMany({
+    where: { customCardId: { in: customCardIds } },
+  });
+  const cards = await client.customCard.deleteMany({
+    where: { id: { in: customCardIds }, deckId },
+  });
+  return { removed: progress.count + cards.count };
+}
+
 /** Tambah custom card buatan user sendiri ke deck. */
 export async function addCustomCardToDeck(
   client: DeckClient,
