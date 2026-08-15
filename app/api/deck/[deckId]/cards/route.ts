@@ -109,6 +109,12 @@ export async function DELETE(
     : null;
   const customCardIdsValid = customCardIds !== null && customCardIds.every((id) => id);
 
+  // Kartu DailyTalk (chunk) per-kartu — validasi inline, sama pola customCardIds.
+  const dailyTalkCardIds = Array.isArray(body.dailyTalkCardIds) && body.dailyTalkCardIds.length > 0
+    ? body.dailyTalkCardIds.map((id) => (typeof id === "string" ? id.trim() : ""))
+    : null;
+  const dailyTalkCardIdsValid = dailyTalkCardIds !== null && dailyTalkCardIds.every((id) => id);
+
   try {
     if (cardIds.ok) {
       const result = await removeCardsFromDeck(prisma, deckId, session.user.id, cardIds.value.cardIds);
@@ -128,6 +134,10 @@ export async function DELETE(
     }
     if (customCardIdsValid) {
       const result = await removeCustomCardsFromDeck(prisma, deckId, session.user.id, customCardIds);
+      return NextResponse.json({ ok: true, removed: result.removed });
+    }
+    if (dailyTalkCardIdsValid) {
+      const result = await removeChunkCardsFromDeck(prisma, deckId, session.user.id, dailyTalkCardIds);
       return NextResponse.json({ ok: true, removed: result.removed });
     }
     return NextResponse.json(

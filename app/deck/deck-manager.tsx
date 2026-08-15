@@ -80,6 +80,9 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
   const [selectedLevels, setSelectedLevels] = useState<number[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [addingLevels, setAddingLevels] = useState(false);
+  const [removeMaterials, setRemoveMaterials] = useState(false);
+  // Naikkan counter ini untuk memuat ulang materi picker (mis. setelah hapus massal).
+  const [materialsRefresh, setMaterialsRefresh] = useState(0);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Form kartu custom (POST /api/deck/[deckId]/custom)
@@ -212,7 +215,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
     return () => {
       cancelled = true;
     };
-  }, [modalDeck]);
+  }, [modalDeck, materialsRefresh]);
 
   const toggleLevel = useCallback((level: number) => {
     setSelectedLevels((cur) =>
@@ -291,6 +294,43 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
       setAddingLevels(false);
     }
   }, [modalDeck, addingLevels, curriculumKind, selectedLevels, selectedCategories, refreshDecks, t]);
+
+  // Hapus materi massal (level HSK / kategori) dari deck — reuse seleksi yang sama.
+  const removeSelectedMaterials = useCallback(async () => {
+    if (!modalDeck || removeMaterials) return;
+    const isHsk = curriculumKind === "hsk";
+    if ((isHsk && selectedLevels.length === 0) || (!isHsk && selectedCategories.length === 0)) {
+      return;
+    }
+    setRemoveMaterials(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/deck/${modalDeck.id}/cards`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          isHsk ? { hskLevel: selectedLevels } : { categories: selectedCategories }
+        ),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? t("deck.errorRemoveCards"));
+        return;
+      }
+      const data: { removed?: number } = await res.json();
+      const removed = data.removed ?? 0;
+      setSelectedLevels([]);
+      setSelectedCategories([]);
+      setSuccessMsg(t("deck.successRemoved", { count: removed }));
+      await refreshDecks();
+      setMaterialsRefresh((n) => n + 1);
+    } catch {
+      setError(t("deck.errorRemoveCards"));
+    } finally {
+      setRemoveMaterials(false);
+    }
+  }, [modalDeck, removeMaterials, curriculumKind, selectedLevels, selectedCategories, refreshDecks, t]);
 
   // Pencarian global cards — debounce sederhana via interval di effect.
   const [query, setQuery] = useState("");
@@ -659,21 +699,32 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                               </label>
                             ))}
                           </div>
-                          <button
-                            onClick={addSelectedMaterials}
-                            disabled={addingLevels || selectedCategories.length === 0}
-                            className="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm disabled:opacity-40"
-                          >
-                            {addingLevels
-                              ? t("deck.adding")
-                              : t("deck.addWordsToDeck", {
-                                  count: selectedCategories.reduce(
-                                    (sum, c) =>
-                                      sum + (categories.find((x) => x.category === c)?.count ?? 0),
-                                    0
-                                  ),
-                                })}
-                          </button>
+                          <div className="flex flex-wrap gap-sm">
+                            <button
+                              onClick={addSelectedMaterials}
+                              disabled={addingLevels || selectedCategories.length === 0}
+                              className="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm disabled:opacity-40"
+                            >
+                              {addingLevels
+                                ? t("deck.adding")
+                                : t("deck.addWordsToDeck", {
+                                    count: selectedCategories.reduce(
+                                      (sum, c) =>
+                                        sum + (categories.find((x) => x.category === c)?.count ?? 0),
+                                      0
+                                    ),
+                                  })}
+                            </button>
+                            <button
+                              onClick={removeSelectedMaterials}
+                              disabled={removeMaterials || selectedCategories.length === 0}
+                              className="w-full sm:w-auto border border-error text-error hover:bg-error-container px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors disabled:opacity-40"
+                            >
+                              {removeMaterials
+                                ? t("deck.removing")
+                                : t("deck.removeSelectedCategories")}
+                            </button>
+                          </div>
                         </>
                       )}
                     </>
@@ -740,20 +791,31 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
                               </label>
                             ))}
                           </div>
-                          <button
-                            onClick={addSelectedMaterials}
-                            disabled={addingLevels || selectedLevels.length === 0}
-                            className="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm disabled:opacity-40"
-                          >
-                            {addingLevels
-                              ? t("deck.adding")
-                              : t("deck.addWordsToDeck", {
-                                  count: selectedLevels.reduce(
-                                    (sum, l) => sum + (hskLevels.find((h) => h.level === l)?.count ?? 0),
-                                    0
-                                  ),
-                                })}
-                          </button>
+                          <div className="flex flex-wrap gap-sm">
+                            <button
+                              onClick={addSelectedMaterials}
+                              disabled={addingLevels || selectedLevels.length === 0}
+                              className="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm disabled:opacity-40"
+                            >
+                              {addingLevels
+                                ? t("deck.adding")
+                                : t("deck.addWordsToDeck", {
+                                    count: selectedLevels.reduce(
+                                      (sum, l) => sum + (hskLevels.find((h) => h.level === l)?.count ?? 0),
+                                      0
+                                    ),
+                                  })}
+                            </button>
+                            <button
+                              onClick={removeSelectedMaterials}
+                              disabled={removeMaterials || selectedLevels.length === 0}
+                              className="w-full sm:w-auto border border-error text-error hover:bg-error-container px-lg py-sm rounded-lg font-body-md text-body-md font-medium transition-colors disabled:opacity-40"
+                            >
+                              {removeMaterials
+                                ? t("deck.removing")
+                                : t("deck.removeSelectedLevels")}
+                            </button>
+                          </div>
                         </>
                       )}
 

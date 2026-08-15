@@ -90,6 +90,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
   const [data, setData] = useState<BrowseResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   // Debounce pencarian sebelum fetch.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,6 +124,40 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
       setLoading(false);
     }
   }, [deckId, search, hskLevel, category, page, t]);
+
+  // Hapus satu kartu dari deck — payload per source: hsk → cardIds, chunk → dailyTalkCardIds, custom → customCardIds.
+  const removeCard = useCallback(
+    async (card: BrowseCard) => {
+      if (removingId) return;
+      if (!window.confirm(`${t("deck.removeCard")} — ${card.hanzi}?`)) return;
+      setRemovingId(card.cardId);
+      setError(null);
+      try {
+        const payload =
+          card.source === "custom"
+            ? { customCardIds: [card.cardId] }
+            : card.source === "chunk"
+              ? { dailyTalkCardIds: [card.cardId] }
+              : { cardIds: [card.cardId] };
+        const res = await fetch(`/api/deck/${deckId}/cards`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          setError(data?.error ?? t("deck.errorRemoveCards"));
+          return;
+        }
+        await load();
+      } catch {
+        setError(t("deck.errorRemoveCards"));
+      } finally {
+        setRemovingId(null);
+      }
+    },
+    [removingId, deckId, load, t]
+  );
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -241,6 +276,9 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                   <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
                     {t("deck.colNextReview")}
                   </th>
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                    {t("deck.colActions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -295,6 +333,18 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                     >
                       {formatDate(card.nextReviewAt, language)}
                     </td>
+                    <td className="px-md py-sm whitespace-nowrap">
+                      {card.source !== "chunk" && (
+                        <button
+                          aria-label={t("deck.removeCard")}
+                          onClick={() => removeCard(card)}
+                          disabled={removingId !== null}
+                          className="flex items-center justify-center p-xs rounded hover:bg-error-container text-error transition-colors disabled:opacity-40"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -348,6 +398,19 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                     {t("deck.colNextReview")}: {formatDate(card.nextReviewAt, language)}
                   </span>
                 </div>
+                {card.source !== "chunk" && (
+                  <div className="mt-sm border-t border-outline-variant/40 pt-sm">
+                    <button
+                      aria-label={t("deck.removeCard")}
+                      onClick={() => removeCard(card)}
+                      disabled={removingId !== null}
+                      className="inline-flex items-center gap-xs px-sm py-xs rounded hover:bg-error-container text-error font-body-md text-body-md transition-colors disabled:opacity-40"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      {t("deck.removeCard")}
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
