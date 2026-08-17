@@ -145,7 +145,7 @@ export default function ReviewPage() {
 
       <div className={`flex-1 flex flex-col justify-center perspective-1000 w-full mb-xl ${flipped ? "flashcard-flipped" : ""}`}>
         <div
-          className="flashcard-container relative w-full min-h-[300px] h-auto max-h-[400px] transform-style-3d cursor-pointer"
+          className="flashcard-container relative w-full min-h-[220px] max-h-[300px] sm:min-h-[300px] sm:max-h-[420px] transform-style-3d cursor-pointer"
           onClick={() => setFlipped((f) => !f)}
         >
           <div className="absolute inset-0 w-full h-full backface-hidden bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active">
@@ -172,7 +172,7 @@ export default function ReviewPage() {
               >
                 <span className="material-symbols-outlined text-[24px]">volume_up</span>
               </button>
-              <span className="font-pinyin-ruby text-pinyin-ruby text-on-surface-variant mb-md">
+              <span className="font-pinyin-ruby text-body-lg text-on-surface-variant mb-md">
                 {current.pinyin ? numToSymbolPinyin(current.pinyin) : ""}
               </span>
               <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
