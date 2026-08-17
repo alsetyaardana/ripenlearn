@@ -60,11 +60,14 @@ export default function ReviewPage() {
 
   const lastPlayedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (flipped && current && lastPlayedRef.current !== current.hanzi) {
-      lastPlayedRef.current = current.hanzi;
-      speak(current.hanzi, "zh");
+    if (flipped && current && lastPlayedRef.current !== current.cardId) {
+      lastPlayedRef.current = current.cardId;
+      // TTS pakai pinyin (bukan hanzi) — hanzi polos bisa dibaca dengan bacaan
+      // default yang salah untuk kata polifonik (还 → hái vs huán).
+      const ttsText = current.pinyin || current.hanzi;
+      speak(ttsText, "zh");
     }
-  }, [flipped, current?.hanzi, speak]);
+  }, [flipped, current, speak]);
 
   const submitRating = useCallback(
     async (rating: Rating) => {
@@ -124,7 +127,7 @@ export default function ReviewPage() {
   const doneCount = total - queue.length;
 
   return (
-    <main className="w-full max-w-[680px] flex-1 flex flex-col px-md py-lg md:py-xl mx-auto min-h-screen">
+    <main className="w-full max-w-[680px] flex-1 flex flex-col px-md py-lg md:py-xl mx-auto min-h-screen pb-[88px] md:pb-xl">
       <header className="w-full flex justify-between items-center mb-xl">
         <button
           aria-label="Close Review"
@@ -166,7 +169,7 @@ export default function ReviewPage() {
                 aria-label="Play pronunciation"
                 onClick={(e) => {
                   e.stopPropagation();
-                  speak(current.hanzi, "zh");
+                  speak(current.pinyin || current.hanzi, "zh");
                 }}
                 className="absolute top-md right-md flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
               >
