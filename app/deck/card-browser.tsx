@@ -246,37 +246,37 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
         <>
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto rounded-lg border border-outline-variant/40 bg-surface-container-lowest">
-            <table className="w-full text-left">
+            <table className="w-full text-left table-fixed">
               <thead>
                 <tr className="border-b border-outline-variant/40">
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colHanzi")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colPinyin")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colMeaning")}
                   </th>
                   {deckKind === "CHUNKING" ? (
-                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                       {t("deck.colCategory")}
                     </th>
                   ) : (
-                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                    <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                       {t("deck.colHsk")}
                     </th>
                   )}
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colStatus")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colLastReviewed")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colNextReview")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap w-[60px]">
                     {t("deck.colActions")}
                   </th>
                 </tr>
@@ -299,11 +299,13 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                         </button>
                       </div>
                     </td>
-                    <td className="px-md py-sm font-pinyin-ruby text-pinyin-ruby text-on-surface-variant whitespace-nowrap">
-                      {card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}
+                    <td className="px-md py-sm font-pinyin-ruby text-pinyin-ruby text-on-surface-variant truncate">
+                      <span title={card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}>
+                        {card.pinyin ? numToSymbolPinyin(card.pinyin) : ""}
+                      </span>
                     </td>
-                    <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant">
-                      {card.arti}
+                    <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant truncate">
+                      <span title={card.arti}>{card.arti}</span>
                     </td>
                     {deckKind === "CHUNKING" ? (
                       <td className="px-md py-sm font-body-md text-body-md text-on-surface-variant whitespace-nowrap">
@@ -334,16 +336,14 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                       {formatDate(card.nextReviewAt, language)}
                     </td>
                     <td className="px-md py-sm whitespace-nowrap">
-                      {card.source !== "chunk" && (
-                        <button
-                          aria-label={t("deck.removeCard")}
-                          onClick={() => removeCard(card)}
-                          disabled={removingId !== null}
-                          className="flex items-center justify-center p-xs rounded hover:bg-error-container text-error transition-colors disabled:opacity-40"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
-                        </button>
-                      )}
+                      <button
+                        aria-label={t("deck.removeCard")}
+                        onClick={() => removeCard(card)}
+                        disabled={removingId !== null}
+                        className="flex items-center justify-center p-xs rounded hover:bg-error-container text-error transition-colors disabled:opacity-40"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -398,19 +398,17 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                     {t("deck.colNextReview")}: {formatDate(card.nextReviewAt, language)}
                   </span>
                 </div>
-                {card.source !== "chunk" && (
-                  <div className="mt-sm border-t border-outline-variant/40 pt-sm">
-                    <button
-                      aria-label={t("deck.removeCard")}
-                      onClick={() => removeCard(card)}
-                      disabled={removingId !== null}
-                      className="inline-flex items-center gap-xs px-sm py-xs rounded hover:bg-error-container text-error font-body-md text-body-md transition-colors disabled:opacity-40"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
-                      {t("deck.removeCard")}
-                    </button>
-                  </div>
-                )}
+                <div className="mt-sm border-t border-outline-variant/40 pt-sm">
+                  <button
+                    aria-label={t("deck.removeCard")}
+                    onClick={() => removeCard(card)}
+                    disabled={removingId !== null}
+                    className="inline-flex items-center gap-xs px-sm py-xs rounded hover:bg-error-container text-error font-body-md text-body-md transition-colors disabled:opacity-40"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                    {t("deck.removeCard")}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
