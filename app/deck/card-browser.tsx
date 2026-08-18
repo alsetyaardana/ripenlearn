@@ -270,13 +270,13 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                   <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
                     {t("deck.colStatus")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase leading-tight w-[110px]">
                     {t("deck.colLastReviewed")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase leading-tight w-[110px]">
                     {t("deck.colNextReview")}
                   </th>
-                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap w-[60px]">
+                  <th className="px-md py-sm font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap w-[72px] text-right">
                     {t("deck.colActions")}
                   </th>
                 </tr>
@@ -335,12 +335,12 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                     >
                       {formatDate(card.nextReviewAt, language)}
                     </td>
-                    <td className="px-md py-sm whitespace-nowrap">
+                    <td className="px-md py-sm whitespace-nowrap text-right">
                       <button
                         aria-label={t("deck.removeCard")}
                         onClick={() => removeCard(card)}
                         disabled={removingId !== null}
-                        className="flex items-center justify-center p-xs rounded hover:bg-error-container text-error transition-colors disabled:opacity-40"
+                        className="inline-flex items-center justify-center p-xs rounded hover:bg-error-container text-error transition-colors disabled:opacity-40"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
