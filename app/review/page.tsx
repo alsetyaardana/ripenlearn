@@ -146,58 +146,66 @@ export default function ReviewPage() {
         </div>
       </header>
 
-      <div className={`flex-1 flex flex-col justify-center perspective-1000 w-full mb-xl ${flipped ? "flashcard-flipped" : ""}`}>
+      <div className="flex-1 flex flex-col justify-center w-full mb-xl">
         <div
-          className="flashcard-container relative w-full min-h-[220px] max-h-[300px] sm:min-h-[300px] sm:max-h-[420px] transform-style-3d cursor-pointer"
+          className="relative w-full min-h-[220px] max-h-[300px] sm:min-h-[300px] sm:max-h-[420px] cursor-pointer"
           onClick={() => setFlipped((f) => !f)}
         >
-          <div className="absolute inset-0 w-full h-full backface-hidden bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active">
-            <span className="font-headline-hanzi text-[40px] sm:text-[56px] md:text-[64px] text-primary tracking-widest">
-              {current.hanzi}
-            </span>
-            <div className="absolute bottom-md text-center w-full">
-              <span className="font-label-caps text-label-caps text-on-surface-variant uppercase opacity-50">
-                Tap to reveal
+          {!flipped ? (
+            <div
+              key="card-front"
+              className="absolute inset-0 w-full h-full bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active card-face-enter"
+            >
+              <span className="font-headline-hanzi text-[40px] sm:text-[56px] md:text-[64px] text-primary tracking-widest">
+                {current.hanzi}
               </span>
-            </div>
-          </div>
-
-          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-surface-container-lowest border border-unripe-pale rounded-xl paper-texture micro-shadow-active text-center">
-            <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-center p-lg">
-              <span className="font-headline-md text-headline-md text-primary mb-xs">{current.hanzi}</span>
-              <button
-                aria-label="Play pronunciation"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  speak(current.pinyin || current.hanzi, "zh");
-                }}
-                className="absolute top-md right-md flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
-              >
-                <span className="material-symbols-outlined text-[24px]">volume_up</span>
-              </button>
-              <span className="font-pinyin-ruby text-body-lg text-on-surface-variant mb-md">
-                {current.pinyin ? numToSymbolPinyin(current.pinyin) : ""}
-              </span>
-              <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
-              <div className="flex flex-col items-center gap-xs mb-lg">
-                <span className="font-body-lg text-body-lg text-primary font-medium">
-                  {current.source === "chunk" || current.source === "custom"
-                    ? current.artiId
-                    : `${current.artiId} / ${current.artiEn}`}
+              <div className="absolute bottom-md text-center w-full">
+                <span className="font-label-caps text-label-caps text-on-surface-variant uppercase opacity-50">
+                  Tap to reveal
                 </span>
-                {current.partOfSpeech && (
-                  <span className="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-sm py-unit rounded uppercase">
-                    {current.partOfSpeech}
+              </div>
+            </div>
+          ) : (
+            <div
+              key="card-back"
+              className="absolute inset-0 w-full h-full bg-surface-container-lowest border border-unripe-pale rounded-xl paper-texture micro-shadow-active text-center overflow-y-auto card-face-enter"
+            >
+              <div className="w-full h-full flex flex-col items-center justify-center p-lg">
+                <span className="font-headline-md text-headline-md text-primary mb-xs">{current.hanzi}</span>
+                <button
+                  aria-label="Play pronunciation"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    speak(current.pinyin || current.hanzi, "zh");
+                  }}
+                  className="absolute top-md right-md flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
+                >
+                  <span className="material-symbols-outlined text-[24px]">volume_up</span>
+                </button>
+                <span className="font-pinyin-ruby text-body-lg text-on-surface-variant mb-md">
+                  {current.pinyin ? numToSymbolPinyin(current.pinyin) : ""}
+                </span>
+                <div className="w-12 h-[1px] bg-outline-variant mb-md opacity-50" />
+                <div className="flex flex-col items-center gap-xs mb-lg">
+                  <span className="font-body-lg text-body-lg text-primary font-medium">
+                    {current.source === "chunk" || current.source === "custom"
+                      ? current.artiId
+                      : `${current.artiId} / ${current.artiEn}`}
                   </span>
+                  {current.partOfSpeech && (
+                    <span className="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-sm py-unit rounded uppercase">
+                      {current.partOfSpeech}
+                    </span>
+                  )}
+                </div>
+                {current.exampleSentence && (
+                  <div className="text-left w-full max-w-[80%] border-l-2 border-primary-fixed-dim pl-sm mt-sm">
+                    <p className="font-body-md text-body-md text-on-surface">{current.exampleSentence}</p>
+                  </div>
                 )}
               </div>
-              {current.exampleSentence && (
-                <div className="text-left w-full max-w-[80%] border-l-2 border-primary-fixed-dim pl-sm mt-sm">
-                  <p className="font-body-md text-body-md text-on-surface">{current.exampleSentence}</p>
-                </div>
-              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -21,33 +21,21 @@
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
 }
 
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.transform-style-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-.rotate-y-180 {
-  transform: rotateY(180deg);
-}
-
-.flashcard-container {
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-transform-style: preserve-3d;
-}
-
-.flashcard-flipped .flashcard-container {
-  transform: rotateY(180deg);
-}
-
 .micro-shadow-active {
   box-shadow: 0 16px 32px -4px rgba(22, 52, 34, 0.08);
+}
+
+/* Transisi sisi kartu (2D fade+scale, bukan flip 3D — anti tembus di Android) */
+.card-face-enter {
+  animation: cardFaceEnter 0.25s ease-out;
+}
+@keyframes cardFaceEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
