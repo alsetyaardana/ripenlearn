@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { useTts } from "@/lib/use-tts";
 import { numToSymbolPinyin } from "@/lib/pinyin-format";
+import { getTtsText } from "@/lib/tts-text";
 import type { CardStatus } from "@prisma/client";
 
 interface BrowseCard {
@@ -292,7 +293,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                         {card.hanzi}
                         <button
                           aria-label="Play pronunciation"
-                          onClick={() => speak(card.hanzi, "zh")}
+                          onClick={() => speak(getTtsText(card.hanzi, card.pinyin), "zh")}
                           className="flex items-center justify-center p-xs rounded-full hover:bg-surface-container text-on-surface-variant transition-colors"
                         >
                           <span className="material-symbols-outlined text-[18px]">volume_up</span>
@@ -366,7 +367,7 @@ export default function CardBrowser({ deckId, deckKind }: CardBrowserProps) {
                     </span>
                     <button
                       aria-label="Play pronunciation"
-                      onClick={() => speak(card.hanzi, "zh")}
+                      onClick={() => speak(getTtsText(card.hanzi, card.pinyin), "zh")}
                       className="inline-flex items-center justify-center p-xs rounded-full hover:bg-surface-container text-on-surface-variant transition-colors align-middle"
                     >
                       <span className="material-symbols-outlined text-[18px]">volume_up</span>

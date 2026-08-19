@@ -7,6 +7,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { numToSymbolPinyin } from "@/lib/pinyin-format";
+import { getTtsText } from "@/lib/tts-text";
 import { useTts } from "@/lib/use-tts";
 
 interface ReviewCard {
@@ -62,10 +63,8 @@ export default function ReviewPage() {
   useEffect(() => {
     if (flipped && current && lastPlayedRef.current !== current.cardId) {
       lastPlayedRef.current = current.cardId;
-      // TTS pakai pinyin (bukan hanzi) — hanzi polos bisa dibaca dengan bacaan
-      // default yang salah untuk kata polifonik (还 → hái vs huán).
-      const ttsText = current.pinyin || current.hanzi;
-      speak(ttsText, "zh");
+      // TTS baca hanzi natural; kata polifonik dapat panduan pinyin (还 → 还（hái）).
+      speak(getTtsText(current.hanzi, current.pinyin), "zh");
     }
   }, [flipped, current, speak]);
 
@@ -176,7 +175,7 @@ export default function ReviewPage() {
                   aria-label="Play pronunciation"
                   onClick={(e) => {
                     e.stopPropagation();
-                    speak(current.pinyin || current.hanzi, "zh");
+                    speak(getTtsText(current.hanzi, current.pinyin), "zh");
                   }}
                   className="absolute top-md right-md flex items-center justify-center p-sm rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant"
                 >
