@@ -48,6 +48,7 @@ model User {
   chatSessions      ChatSession[]
   readingSessions   ReadingSession[]
   studyDays         StudyDay[]
+  toneQuizResults   ToneQuizResult[]
 }
 
 // UNLIMITED ditambahkan untuk akun tanpa batas quota (mis. owner/tester yang
@@ -171,9 +172,10 @@ model Card {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  topic        Topic?         @relation(fields: [topicId], references: [id])
-  progress     CardProgress[]
-  deckHskCards DeckHskCard[]
+  topic           Topic?           @relation(fields: [topicId], references: [id])
+  progress        CardProgress[]
+  deckHskCards    DeckHskCard[]
+  toneQuizResults ToneQuizResult[]
 
   @@unique([hanzi, hskLevel])
   @@index([hskLevel])
@@ -557,4 +559,24 @@ model GlobalSettings {
   quotaFree          Int      @default(20)
   quotaPremium       Int      @default(200)
   updatedAt          DateTime @updatedAt
+}
+
+// ============================================================
+// TONE QUIZ — hasil latihan pengenalan nada per user per kartu
+// ============================================================
+
+model ToneQuizResult {
+  id           String   @id @default(cuid())
+  userId       String
+  cardId       String
+  selectedTone Int      // 1-5 (5 = netral)
+  correctTone  Int      // 1-5
+  isCorrect    Boolean
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cardId])
 }
