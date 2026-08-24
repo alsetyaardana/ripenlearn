@@ -58,3 +58,25 @@ export function getToneColor(tone: number): string {
     default: return "#6B7280"; // abu-abu — netral
   }
 }
+
+/** SVG path untuk garis kontur nada (viewBox 0 0 60 24). */
+export function getToneContour(tone: number): string {
+  switch (tone) {
+    case 1: return "M 5 6 L 55 6";           // datar tinggi
+    case 2: return "M 5 18 Q 30 12 55 4";    // naik
+    case 3: return "M 5 6 Q 20 20 30 16 Q 40 12 55 4"; // turun-naik
+    case 4: return "M 5 4 Q 30 10 55 20";    // turun tajam
+    default: return "M 25 12 L 35 12";       // titik netral
+  }
+}
+
+/** Deskripsi nada untuk tooltip/penjelasan. */
+export function getToneDescription(tone: number): string {
+  switch (tone) {
+    case 1: return "tinggi datar";
+    case 2: return "naik";
+    case 3: return "turun lalu naik";
+    case 4: return "turun tajam";
+    default: return "ringan/netral";
+  }
+}

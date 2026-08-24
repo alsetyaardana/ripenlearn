@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useTts } from "@/lib/use-tts";
-import { getToneColor, getToneLabel } from "@/lib/tones";
+import { getToneColor, getToneLabel, getToneContour, getToneDescription } from "@/lib/tones";
 
 interface QuizCard {
   cardId: string;
@@ -295,18 +295,17 @@ export default function TonesPage() {
                 key={tone}
                 onClick={() => submitAnswer(tone)}
                 disabled={showResult || submitting}
-                className={`${btnClass} rounded-xl py-md flex flex-col items-center gap-xs`}
+                className={`${btnClass} rounded-xl py-md px-sm flex flex-col items-center gap-xs`}
                 style={!showResult ? { color } : undefined}
               >
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
+                <svg viewBox="0 0 60 24" className="w-12 h-5" fill="none" strokeWidth="3" strokeLinecap="round" stroke={showResult ? (isCorrectTone ? "#16a34a" : isWrong ? "#dc2626" : "#9ca3af") : color}>
+                  <path d={getToneContour(tone)} />
+                </svg>
                 <span className="font-label-md text-label-md text-on-surface">
-                  {tone === 5 ? "Netral" : `${tone}`}
+                  {tone === 5 ? "Netral" : `Nada ${tone}`}
                 </span>
-                <span className="font-body-xs text-on-surface-variant hidden sm:block">
-                  {getToneLabel(tone)}
+                <span className="font-body-xs text-on-surface-variant">
+                  {getToneDescription(tone)}
                 </span>
               </button>
             );
