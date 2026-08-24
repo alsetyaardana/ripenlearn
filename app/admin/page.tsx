@@ -2,6 +2,7 @@
 // Admin dashboard overview — statistik ringkas.
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import AdminNav from "@/components/admin/admin-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function AdminPage() {
   return (
     <>
       <h1 className="font-display-lg text-display-lg text-primary mb-lg">Admin Dashboard</h1>
+      <AdminNav />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-md mb-xl">
