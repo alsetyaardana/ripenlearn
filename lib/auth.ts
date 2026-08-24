@@ -6,6 +6,7 @@
 
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { Tier, Role } from "@prisma/client";
 import { prisma } from "./prisma";
 import { authConfig } from "./auth.config";
 
@@ -19,17 +20,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // token JWT yang sudah dienkode, bukan query Prisma ulang.
       if (user) {
         token.id = user.id;
-        // TODO(auth-agent): tier bisa berubah di DB (mis. upgrade manual ke
+        // TODO(auth-agent): tier/role bisa berubah di DB (mis. upgrade manual ke
         // UNLIMITED) tapi tidak ter-refresh sampai token expire/re-login — cukup
         // untuk MVP, revisit kalau perlu refresh lebih cepat.
-        token.tier = (user as { tier?: string }).tier ?? "FREE";
+        token.tier = ((user as { tier?: string }).tier ?? "FREE") as Tier;
+        token.role = ((user as { role?: string }).role ?? "USER") as Role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id?: string }).id = token.id as string;
-        (session.user as { tier?: string }).tier = (token.tier as string) ?? "FREE";
+        session.user.id = token.id as string;
+        session.user.tier = (token.tier as Tier) ?? "FREE";
+        session.user.role = (token.role as Role) ?? "USER";
       }
       return session;
     },

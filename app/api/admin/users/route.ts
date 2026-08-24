@@ -1,5 +1,5 @@
 // app/api/admin/users/route.ts
-// GET — list semua user (admin only). PUT — update tier/role user (admin only).
+// GET — list semua user (admin only). PATCH — update tier/role user. DELETE — hapus user.
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,13 +7,31 @@ import { prisma } from "@/lib/prisma";
 const VALID_TIERS = ["FREE", "PREMIUM", "UNLIMITED"] as const;
 const VALID_ROLES = ["USER", "ADMIN"] as const;
 
-export async function GET() {
+async function requireAdmin() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return null;
   }
+  return session.user;
+}
+
+export async function GET(req: NextRequest) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const search = req.nextUrl.searchParams.get("search")?.trim() || "";
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
 
   const users = await prisma.user.findMany({
+    where,
     select: {
       id: true,
       name: true,
@@ -28,11 +46,9 @@ export async function GET() {
   return NextResponse.json({ users });
 }
 
-export async function PUT(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export async function PATCH(req: NextRequest) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object" || typeof body.id !== "string") {
@@ -64,6 +80,28 @@ export async function PUT(req: NextRequest) {
       select: { id: true, name: true, email: true, tier: true, role: true, createdAt: true },
     });
     return NextResponse.json({ user });
+  } catch {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body || typeof body !== "object" || typeof body.id !== "string") {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  // Cegah admin hapus diri sendiri
+  if (body.id === admin.id) {
+    return NextResponse.json({ error: "Tidak bisa menghapus akun sendiri" }, { status: 400 });
+  }
+
+  try {
+    await prisma.user.delete({ where: { id: body.id } });
+    return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

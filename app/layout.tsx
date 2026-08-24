@@ -56,9 +56,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SidebarProvider>
               <AppSidebarWrapper
                 name={user!.name}
-                image={(user as unknown as { image?: string | null }).image ?? null}
-                tier={(user as unknown as { tier?: string | null }).tier ?? null}
-                role={(user as unknown as { role?: string | null }).role ?? null}
+                image={user!.image ?? null}
+                tier={user!.tier ?? null}
+                role={user!.role ?? null}
               >
                 {children}
               </AppSidebarWrapper>

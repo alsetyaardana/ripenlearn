@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id;
-  const tier = (session.user as any).tier ?? "FREE";
+  const userId = session.user.id;
+  const tier = session.user.tier ?? "FREE";
 
   try {
     await checkQuota(userId, "chat", tier);

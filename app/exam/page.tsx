@@ -3,38 +3,47 @@
 // bagian "Exam View" di stitch/latihan_ujian_ripen/code.html (progress header, kartu
 // soal, tombol opsi 2 kolom) — disederhanakan jadi single-column konsisten dengan
 // app/review/page.tsx dan app/reading/page.tsx.
+//
+// Jawaban di-submit ke server setelah selesai; correctIndex TIDAK pernah dikirim ke client.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface ExamQuestion {
+interface ClientQuestion {
   question: string;
   options: string[];
-  correctIndex: number;
 }
 
-interface ExamSet {
-  questions: ExamQuestion[];
-  vocabWarning: boolean;
+interface ExamResult {
+  correct: boolean;
+  correctIndex: number;
 }
 
 export default function ExamPage() {
   const router = useRouter();
-  const [exam, setExam] = useState<ExamSet | null>(null);
+  const [examId, setExamId] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<ClientQuestion[]>([]);
+  const [vocabWarning, setVocabWarning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [results, setResults] = useState<ExamResult[] | null>(null);
   const [finished, setFinished] = useState(false);
 
   const generate = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setExamId(null);
+    setQuestions([]);
+    setVocabWarning(false);
     setIndex(0);
     setSelected(null);
-    setScore(0);
+    setAnswers([]);
+    setResults(null);
     setFinished(false);
     try {
       const res = await fetch("/api/exam", { method: "POST" });
@@ -48,8 +57,10 @@ export default function ExamPage() {
         setError(data?.error ?? `Gagal membuat soal ujian (${res.status})`);
         return;
       }
-      const data: ExamSet = await res.json();
-      setExam(data);
+      const data = await res.json();
+      setExamId(data.examId);
+      setQuestions(data.questions);
+      setVocabWarning(data.vocabWarning ?? false);
     } catch {
       setError("Gagal terhubung ke server, coba lagi.");
     } finally {
@@ -57,25 +68,57 @@ export default function ExamPage() {
     }
   }, []);
 
-  const current = exam?.questions[index];
-  const total = exam?.questions.length ?? 0;
+  const total = questions.length;
   const progressPct = useMemo(() => (total ? ((index + 1) / total) * 100 : 0), [index, total]);
 
   const pickOption = (oi: number) => {
-    if (selected !== null || !current) return;
+    if (selected !== null) return;
     setSelected(oi);
-    if (oi === current.correctIndex) setScore((s) => s + 1);
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[index] = oi;
+      return next;
+    });
   };
 
-  const next = () => {
-    if (!exam) return;
-    if (index + 1 >= exam.questions.length) {
-      setFinished(true);
+  const next = async () => {
+    if (index + 1 >= total) {
+      // Soal terakhir — submit jawaban ke server
+      await submitExam();
       return;
     }
     setIndex((i) => i + 1);
     setSelected(null);
   };
+
+  const submitExam = async () => {
+    if (!examId) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/exam/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examId, answers }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? `Gagal submit jawaban (${res.status})`);
+        return;
+      }
+      const data = await res.json();
+      setResults(data.results);
+      setFinished(true);
+    } catch {
+      setError("Gagal terhubung ke server, coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const score = results?.filter((r) => r.correct).length ?? 0;
+  const current = questions[index];
+  const currentResult = results?.[index];
 
   return (
     <main className="w-full max-w-[680px] flex flex-col mx-auto min-h-screen px-md py-lg md:py-xl">
@@ -96,7 +139,7 @@ export default function ExamPage() {
 
       {error && <p className="font-body-md text-body-md text-error mb-md">{error}</p>}
 
-      {!exam && !loading && (
+      {!examId && !loading && (
         <div className="flex-1 flex flex-col items-center justify-center gap-md text-center py-xl">
           <p className="font-body-md text-body-md text-on-surface-variant max-w-[480px]">
             Buat set soal simulasi ujian dari vocab yang sudah kamu kuasai.
@@ -116,13 +159,19 @@ export default function ExamPage() {
         </p>
       )}
 
-      {exam && exam.vocabWarning && !finished && (
+      {submitting && (
+        <p className="font-body-md text-body-md text-on-surface-variant text-center py-xl">
+          Memeriksa jawaban...
+        </p>
+      )}
+
+      {examId && vocabWarning && !finished && (
         <div className="bg-error-container text-on-error-container rounded-lg p-sm mb-md font-body-md text-body-md">
           Beberapa soal mungkin memakai kata di luar vocab yang sudah kamu kuasai.
         </div>
       )}
 
-      {exam && !finished && current && (
+      {examId && !finished && !submitting && current && (
         <>
           <div className="flex justify-between items-center mb-sm">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">
@@ -142,7 +191,6 @@ export default function ExamPage() {
             </p>
             <div className="grid grid-cols-1 gap-sm">
               {current.options.map((opt, oi) => {
-                const isCorrect = oi === current.correctIndex;
                 const isSelected = selected === oi;
                 const showResult = selected !== null;
                 return (
@@ -150,17 +198,12 @@ export default function ExamPage() {
                     key={oi}
                     onClick={() => pickOption(oi)}
                     className={`text-left px-md py-md rounded-lg border-2 transition-colors font-body-md text-body-md flex items-center justify-between ${
-                      showResult && isCorrect
-                        ? "border-good-green bg-secondary-fixed text-on-secondary-fixed"
-                        : showResult && isSelected && !isCorrect
-                          ? "border-again-red bg-error-container text-on-error-container"
-                          : "border-surface-container bg-surface hover:border-primary"
+                      showResult && isSelected
+                        ? "border-primary bg-primary-container text-on-primary-container"
+                        : "border-surface-container bg-surface hover:border-primary"
                     }`}
                   >
                     <span>{opt}</span>
-                    {showResult && isCorrect && (
-                      <span className="material-symbols-outlined text-good-green">check_circle</span>
-                    )}
                   </button>
                 );
               })}
@@ -179,7 +222,7 @@ export default function ExamPage() {
         </>
       )}
 
-      {exam && finished && (
+      {finished && results && (
         <div className="flex-1 flex flex-col items-center justify-center gap-md text-center py-xl">
           <span className="font-headline-md text-headline-md text-primary">
             Skor: {score} / {total}
@@ -188,9 +231,46 @@ export default function ExamPage() {
             Simulasi ujian selesai. Jawaban belum mempengaruhi jadwal review kartu (fitur ini
             menyusul).
           </p>
+
+          {/* Ringkasan jawaban */}
+          <div className="w-full text-left mt-md">
+            {questions.map((q, qi) => {
+              const r = results[qi];
+              return (
+                <div key={qi} className="mb-md bg-surface-container-lowest rounded-lg p-md border border-unripe-pale">
+                  <p className="font-body-md text-body-md text-on-background mb-sm">
+                    {qi + 1}. {q.question}
+                  </p>
+                  <div className="flex flex-col gap-xs">
+                    {q.options.map((opt, oi) => {
+                      const isCorrectAnswer = oi === r.correctIndex;
+                      const wasSelected = answers[qi] === oi;
+                      return (
+                        <span
+                          key={oi}
+                          className={`font-body-sm text-body-sm px-sm py-xs rounded ${
+                            isCorrectAnswer
+                              ? "bg-secondary-fixed text-on-secondary-fixed font-medium"
+                              : wasSelected && !r.correct
+                                ? "bg-error-container text-on-error-container"
+                                : "text-on-surface-variant"
+                          }`}
+                        >
+                          {opt}
+                          {isCorrectAnswer && " ✓"}
+                          {wasSelected && !r.correct && " ✗"}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
           <button
             onClick={generate}
-            className="bg-primary hover:bg-primary-container text-on-primary px-lg py-md rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm"
+            className="bg-primary hover:bg-primary-container text-on-primary px-lg py-md rounded-lg font-body-md text-body-md font-medium transition-colors shadow-sm mt-md"
           >
             Ulangi Simulasi
           </button>

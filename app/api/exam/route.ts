@@ -1,9 +1,12 @@
 // app/api/exam/route.ts
 // Dipegang oleh: ai-integration-agent + srs-engine-agent
-// Generate soal simulasi ujian dari kartu mastered, auto-grade dilakukan client-side
-// untuk MVP (belum ada tabel sesi ujian di schema untuk simpan correctIndex server-side).
+// Generate soal simulasi ujian dari kartu mastered.
+// correctIndex disimpan server-side (Redis), TIDAK dikirim ke client.
+// Client submit jawaban ke POST /api/exam/submit, server bandingkan.
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import Redis from "ioredis";
 import { auth } from "@/lib/auth";
 import { checkQuota, QuotaExceededError } from "@/lib/quota";
 import { generateExamQuestions } from "@/lib/ai";
@@ -11,17 +14,32 @@ import { getMasteredCardsForDeck } from "@/lib/fsrs";
 import { getUserSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
 
+const redis = new Redis(process.env.REDIS_URL || "redis://localhost:36379");
+
+// TTL 30 menit — cukup untuk satu sesi ujian
+const EXAM_SESSION_TTL = 1800;
+
+interface StoredExamQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+
+function examKey(examId: string): string {
+  return `exam:${examId}`;
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as { id: string }).id;
-  const tier = (session.user as { tier?: string }).tier ?? "FREE";
+  const userId = session.user.id;
+  const tier = session.user.tier ?? "FREE";
 
   try {
-    await checkQuota(userId, "exam", tier as "FREE" | "PREMIUM" | "UNLIMITED");
+    await checkQuota(userId, "exam", tier);
   } catch (err) {
     if (err instanceof QuotaExceededError) {
       return NextResponse.json(
@@ -32,17 +50,31 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  // TODO(srs-engine-agent): setelah user submit jawaban, hasil grading sebaiknya
-  //   mempengaruhi rating FSRS kartu terkait (lewat endpoint terpisah, mis.
-  //   POST /api/exam/grade, atau extend endpoint ini). Belum diimplementasikan —
-  //   butuh mapping soal -> cardId yang belum ada di struktur ExamQuestion saat ini.
-
   try {
-    // Whitelist vocab: deck yang dipilih di Settings (targetDeckId). Fallback global.
     const settings = await getUserSettings(prisma, userId);
     const masteredWords = await getMasteredCardsForDeck(userId, settings.targetDeckId);
     const exam = await generateExamQuestions(masteredWords);
-    return NextResponse.json(exam);
+
+    // Simpan correctIndex di server, jangan kirim ke client
+    const examId = randomUUID();
+    const stored: StoredExamQuestion[] = exam.questions.map((q) => ({
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+    }));
+    await redis.set(examKey(examId), JSON.stringify(stored), "EX", EXAM_SESSION_TTL);
+
+    // Kirim ke client TANPA correctIndex
+    const clientQuestions = exam.questions.map((q) => ({
+      question: q.question,
+      options: q.options,
+    }));
+
+    return NextResponse.json({
+      examId,
+      questions: clientQuestions,
+      vocabWarning: exam.vocabWarning,
+    });
   } catch (err) {
     console.error("exam route error:", err);
     return NextResponse.json(
