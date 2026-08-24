@@ -27,10 +27,10 @@ export default async function AdminUsersPage() {
   }));
 
   return (
-    <>
-      <h1 className="font-display-lg text-display-lg text-primary mb-lg">Kelola User</h1>
+    <div className="max-w-container-max mx-auto px-md md:px-xl py-lg space-y-xl">
+      <h1 className="font-display-lg text-display-lg text-primary">Kelola User</h1>
       <AdminNav />
       <AdminUsersClient users={serialized} />
-    </>
+    </div>
   );
 }

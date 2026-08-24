@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminCurriculumPage() {
   await requireAdmin();
   return (
-    <>
-      <h1 className="font-display-lg text-display-lg text-primary mb-lg">Data Kurikulum</h1>
+    <div className="max-w-container-max mx-auto px-md md:px-xl py-lg space-y-xl">
+      <h1 className="font-display-lg text-display-lg text-primary">Data Kurikulum</h1>
       <AdminNav />
       <AdminCurriculumClient />
-    </>
+    </div>
   );
 }

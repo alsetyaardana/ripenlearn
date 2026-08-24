@@ -31,8 +31,8 @@ export default async function AdminPage() {
   ];
 
   return (
-    <>
-      <h1 className="font-display-lg text-display-lg text-primary mb-lg">Admin Dashboard</h1>
+    <div className="max-w-container-max mx-auto px-md md:px-xl py-lg space-y-xl">
+      <h1 className="font-display-lg text-display-lg text-primary">Admin Dashboard</h1>
       <AdminNav />
 
       {/* Stat cards */}
@@ -101,6 +101,6 @@ export default async function AdminPage() {
           </table>
         </div>
       </section>
-    </>
+    </div>
   );
 }
