@@ -1,10 +1,12 @@
 // app/admin/page.tsx
 // Admin dashboard overview — statistik ringkas.
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  await requireAdmin();
   const [totalUsers, totalCards, totalCharacters, totalTopics, totalGrammar, cardsByLevel] =
     await Promise.all([
       prisma.user.count(),

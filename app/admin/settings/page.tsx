@@ -2,10 +2,12 @@
 // Admin AI settings — server component, fetch data, render client form.
 import { prisma } from "@/lib/prisma";
 import AdminSettingsClient from "@/components/admin/admin-settings-client";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
+  await requireAdmin();
   let settings = await prisma.globalSettings.findFirst();
   if (!settings) {
     settings = await prisma.globalSettings.create({ data: {} });

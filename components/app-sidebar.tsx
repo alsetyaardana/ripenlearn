@@ -28,6 +28,9 @@ function getNavItems(t: (key: string) => string, isAdmin: boolean) {
     { href: "/exam", icon: "quiz", label: t("nav.exam") },
     { href: "/settings", icon: "settings", label: t("nav.settings") },
   ];
+  if (isAdmin) {
+    items.push({ href: "/admin", icon: "admin_panel_settings", label: t("nav.admin") });
+  }
   return items;
 }
 
