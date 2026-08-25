@@ -6,7 +6,7 @@ import Redis from "ioredis";
 
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
-export type Feature = "chat" | "exam" | "reading";
+export type Feature = "chat" | "exam" | "reading" | "call";
 export type Tier = "FREE" | "PREMIUM" | "UNLIMITED";
 
 // JANGAN ubah angka ini tanpa konfirmasi eksplisit dari user (lihat AGENTS.md).
@@ -14,12 +14,14 @@ const FREE_LIMITS: Record<Feature, number> = {
   chat: 20,
   exam: 5,
   reading: 5,
+  call: 3,
 };
 
 const PREMIUM_LIMITS: Record<Feature, number> = {
   chat: 200,
   exam: 50,
   reading: 50,
+  call: 30,
 };
 
 // UNLIMITED tidak dibatasi angka — dipakai untuk akun yang diberi akses penuh

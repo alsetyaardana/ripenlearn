@@ -266,3 +266,59 @@ function parseExamQuestionsJson(raw: string): ExamQuestion[] {
       correctIndex: typeof q.correctIndex === "number" ? q.correctIndex : 0,
     }));
 }
+
+/**
+ * Streaming chat untuk call mode — mengembalikan ReadableStream yang
+ * mengirim SSE (Server-Sent Events) untuk real-time response.
+ * Dipakai route handler app/api/call/route.ts.
+ */
+export async function streamCallChat(
+  systemPrompt: string,
+  messages: { role: "system" | "user" | "assistant"; content: string }[]
+): Promise<ReadableStream<Uint8Array>> {
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    stream: true,
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
+  });
+
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of response) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+          }
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      } catch (err) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`)
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}
+
+/**
+ * Non-streaming call untuk evaluasi — mengembalikan full response.
+ */
+export async function evaluateCallConversation(
+  systemPrompt: string,
+  userMessage: string
+): Promise<string> {
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+  });
+
+  return response.choices[0]?.message?.content ?? "{}";
+}
