@@ -74,6 +74,20 @@ export const CALL_SCENARIOS: CallScenario[] = [
       "Setelah 6-8 giliran tukar, akhiri percakapan dengan sopan.",
     ].join(" "),
   },
+  {
+    id: "custom",
+    name: "Custom",
+    icon: "edit",
+    description: "Buat topik sendiri",
+    systemPrompt: "", // diisi dinamis dari customTopic user
+  },
+  {
+    id: "daily-talk",
+    name: "Daily Talk",
+    icon: "chat",
+    description: "Latihan percakapan sehari-hari",
+    systemPrompt: "", // diisi dinamis dari dailyTalkVocab
+  },
 ];
 
 // ============================================================
@@ -83,25 +97,56 @@ export const CALL_SCENARIOS: CallScenario[] = [
 /**
  * Bangun system prompt untuk call mode. Struktur prefix-stable
  * untuk context caching DeepSeek (sama seperti chat/reading/exam).
+ *
+ * @param customTopic - topik bebas dari user (hanya untuk skenario "custom")
+ * @param dailyTalkVocab - vocab dari Daily Talk deck user (hanya untuk skenario "daily-talk")
  */
 export function buildCallSystemPrompt(
   scenario: CallScenario,
-  masteredWords: MasteredCard[]
+  masteredWords: MasteredCard[],
+  customTopic?: string,
+  dailyTalkVocab?: MasteredCard[]
 ): string {
   const vocabList = masteredWords.map((w) => `${w.hanzi}(${w.pinyin})`).join(", ");
+
+  // Skenario custom: prompt dinamis dari topik user
+  const scenarioPrompt =
+    scenario.id === "custom" && customTopic
+      ? [
+          `Kamu adalah partner belajar Bahasa Mandarin. Topik percakapan: ${customTopic}.`,
+          "Bantu pelajar berlatih percakapan tentang topik ini.",
+          "Gunakan HANYA vocabulary dari daftar yang diberikan.",
+          "Jawab dalam 1-3 kalimat pendek per giliran.",
+          "Setelah 6-8 giliran tukar, akhiri percakapan dengan sopan.",
+        ].join(" ")
+      : scenario.id === "daily-talk"
+        ? [
+            "Kamu adalah teman ngobrol sehari-hari yang ramah dan sabar.",
+            "Latihan percakapan casual sehari-hari (日常会话).",
+            "Gunakan HANYA vocabulary dari daftar yang diberikan.",
+            "Jawab dalam 1-3 kalimat pendek per giliran.",
+            "Setelah 6-8 giliran tukar, akhiri percakapan dengan sopan.",
+          ].join(" ")
+        : scenario.systemPrompt;
+
+  // Untuk daily-talk: tambahkan vocab khusus Daily Talk sebagai konteks tambahan
+  const dailyTalkSection =
+    scenario.id === "daily-talk" && dailyTalkVocab && dailyTalkVocab.length > 0
+      ? `\n\nVocab khusus Daily Talk yang sudah dikuasai pelajar (prioritas pakai ini):\n${dailyTalkVocab.map((w) => `${w.hanzi}(${w.pinyin})`).join(", ")}`
+      : "";
 
   return [
     "Kamu adalah partner belajar Bahasa Mandarin untuk latihan percakapan lewat voice call.",
     "Gunakan HANYA kata-kata dari daftar vocabulary berikut yang sudah dikuasai pelajar:",
     vocabList || "(belum ada vocab mastered)",
     "Jika perlu kata di luar daftar ini, sertakan pinyin dan arti singkat dalam tanda kurung.",
-    `Skenario: ${scenario.systemPrompt}`,
+    `Skenario: ${scenarioPrompt}`,
     "Format jawaban: JSON dengan field reply (Mandarin), pinyin, dan translation (Bahasa Indonesia).",
     'Contoh: {"reply": "你好！", "pinyin": "nǐ hǎo!", "translation": "Halo!"}',
     "Jawab HANYA dalam format JSON valid, tanpa markdown.",
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join("\n\n") + dailyTalkSection;
 }
 
 // ============================================================

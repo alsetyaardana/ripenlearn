@@ -43,6 +43,8 @@ const SCENARIOS: CallScenario[] = [
   { id: "taxi", name: "Taksi", icon: "local_taxi", description: "Pesan taksi dan beri tahu tujuan" },
   { id: "shopping", name: "Belanja", icon: "shopping_bag", description: "Tanya harga dan beli barang" },
   { id: "hotel", name: "Hotel", icon: "hotel", description: "Check-in dan tanya fasilitas hotel" },
+  { id: "custom", name: "Custom", icon: "edit", description: "Buat topik sendiri" },
+  { id: "daily-talk", name: "Daily Talk", icon: "chat", description: "Latihan percakapan sehari-hari" },
 ];
 
 // ============================================================
@@ -101,6 +103,15 @@ export default function CallPage() {
   const [error, setError] = useState<string | null>(null);
   const [speechSupported, setSpeechSupported] = useState(false);
 
+  // Custom topic state
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customTopicInput, setCustomTopicInput] = useState("");
+  const [customTopic, setCustomTopic] = useState<string | null>(null);
+
+  // Daily Talk state
+  const [dailyTalkVocab, setDailyTalkVocab] = useState<{ hanzi: string; pinyin: string; artiId: string }[]>([]);
+  const [loadingDailyTalk, setLoadingDailyTalk] = useState(false);
+
   const transcriptRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,21 +138,90 @@ export default function CallPage() {
   // ============================================================
 
   const selectScenario = useCallback((s: CallScenario) => {
+    // Custom: tampilkan input dulu, jangan langsung mulai
+    if (s.id === "custom") {
+      setShowCustomInput(true);
+      setCustomTopicInput("");
+      setCustomTopic(null);
+      return;
+    }
+    // Daily Talk: fetch vocab dulu
+    if (s.id === "daily-talk") {
+      fetchDailyTalkVocab(s);
+      return;
+    }
     setScenario(s);
     setMessages([]);
     setEvaluation(null);
     setError(null);
+    setCustomTopic(null);
+    setDailyTalkVocab([]);
     setPhase("calling");
     // Kirim greeting awal dari AI
-    sendToAI(s.id, [], "Halo! Mari mulai percakapan.");
+    sendToAI(s.id, [], "Halo! Mari mulai percakapan.", undefined, undefined);
   }, []);
+
+  // ============================================================
+  // Custom topic: user submit topik → mulai call
+  // ============================================================
+
+  const startCustomTopic = useCallback(() => {
+    const topic = customTopicInput.trim();
+    if (!topic) return;
+    const customScenario: CallScenario = { id: "custom", name: "Custom", icon: "edit", description: topic };
+    setCustomTopic(topic);
+    setShowCustomInput(false);
+    setScenario(customScenario);
+    setMessages([]);
+    setEvaluation(null);
+    setError(null);
+    setDailyTalkVocab([]);
+    setPhase("calling");
+    sendToAI("custom", [], "Halo! Mari mulai percakapan.", topic, undefined);
+  }, [customTopicInput]);
+
+  // ============================================================
+  // Daily Talk: fetch vocab lalu mulai call
+  // ============================================================
+
+  const fetchDailyTalkVocab = useCallback(async (s: CallScenario) => {
+    setLoadingDailyTalk(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/call/daily-talk-vocab");
+      if (!res.ok) {
+        setError(t("call.errorConnect"));
+        setLoadingDailyTalk(false);
+        return;
+      }
+      const data = await res.json();
+      const vocab = Array.isArray(data.vocab) ? data.vocab : [];
+      setDailyTalkVocab(vocab);
+      setScenario(s);
+      setMessages([]);
+      setEvaluation(null);
+      setCustomTopic(null);
+      setPhase("calling");
+      sendToAI(s.id, [], "Halo! Mari mulai percakapan.", undefined, vocab);
+    } catch {
+      setError(t("call.errorConnect"));
+    } finally {
+      setLoadingDailyTalk(false);
+    }
+  }, [t]);
 
   // ============================================================
   // Kirim pesan ke AI (streaming)
   // ============================================================
 
   const sendToAI = useCallback(
-    async (scenarioId: string, currentMessages: CallMessage[], userMessage: string) => {
+    async (
+      scenarioId: string,
+      currentMessages: CallMessage[],
+      userMessage: string,
+      topic?: string,
+      vocab?: { hanzi: string; pinyin: string; artiId: string }[]
+    ) => {
       setSending(true);
       setError(null);
 
@@ -151,14 +231,18 @@ export default function CallPage() {
       setMessages(updatedMessages);
 
       try {
+        const body: Record<string, unknown> = {
+          scenario: scenarioId,
+          messages: currentMessages,
+          userMessage,
+        };
+        if (topic) body.customTopic = topic;
+        if (vocab && vocab.length > 0) body.dailyTalkVocab = vocab;
+
         const res = await fetch("/api/call", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            scenario: scenarioId,
-            messages: currentMessages,
-            userMessage,
-          }),
+          body: JSON.stringify(body),
         });
 
         if (!res.ok) {
@@ -250,7 +334,7 @@ export default function CallPage() {
         setSending(false);
       }
     },
-    [speak, t]
+    [speak, t, customTopic, dailyTalkVocab]
   );
 
   // ============================================================
@@ -279,7 +363,7 @@ export default function CallPage() {
         setInput(transcript);
         // Auto-kirim setelah speech recognition
         if (scenario) {
-          sendToAI(scenario.id, messages, transcript);
+          sendToAI(scenario.id, messages, transcript, customTopic ?? undefined, dailyTalkVocab.length > 0 ? dailyTalkVocab : undefined);
         }
       }
       setListening(false);
@@ -296,7 +380,7 @@ export default function CallPage() {
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-  }, [speechSupported, scenario, messages, sendToAI]);
+  }, [speechSupported, scenario, messages, sendToAI, customTopic, dailyTalkVocab]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -315,8 +399,8 @@ export default function CallPage() {
     if (!text || !scenario || sending) return;
 
     setInput("");
-    sendToAI(scenario.id, messages, text);
-  }, [input, scenario, messages, sending, sendToAI]);
+    sendToAI(scenario.id, messages, text, customTopic ?? undefined, dailyTalkVocab.length > 0 ? dailyTalkVocab : undefined);
+  }, [input, scenario, messages, sending, sendToAI, customTopic, dailyTalkVocab]);
 
   // ============================================================
   // Evaluasi percakapan
@@ -329,14 +413,17 @@ export default function CallPage() {
     setError(null);
 
     try {
+      const evalBody: Record<string, unknown> = {
+        action: "evaluate",
+        scenario: scenario.id,
+        messages,
+      };
+      if (customTopic) evalBody.customTopic = customTopic;
+
       const res = await fetch("/api/call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "evaluate",
-          scenario: scenario.id,
-          messages,
-        }),
+        body: JSON.stringify(evalBody),
       });
 
       if (!res.ok) {
@@ -358,7 +445,7 @@ export default function CallPage() {
     } finally {
       setEvaluating(false);
     }
-  }, [scenario, messages, t]);
+  }, [scenario, messages, t, customTopic]);
 
   // ============================================================
   // Reset untuk call baru
@@ -371,6 +458,10 @@ export default function CallPage() {
     setEvaluation(null);
     setError(null);
     setInput("");
+    setCustomTopic(null);
+    setCustomTopicInput("");
+    setShowCustomInput(false);
+    setDailyTalkVocab([]);
   }, []);
 
   // ============================================================
@@ -391,12 +482,67 @@ export default function CallPage() {
             </p>
           </div>
 
+          {/* Error banner */}
+          {error && (
+            <div className="p-sm rounded-lg bg-error-container text-on-error-container font-body-sm text-body-sm max-w-2xl mx-auto">
+              {error}
+            </div>
+          )}
+
+          {/* Custom topic input overlay */}
+          {showCustomInput && (
+            <div className="max-w-2xl mx-auto p-md rounded-xl bg-surface-container border border-outline-variant space-y-md">
+              <div className="font-title-md text-title-md text-on-surface">
+                Topik Custom
+              </div>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Ketik topik percakapan yang kamu inginkan, misalnya &quot;Di rumah sakit&quot; atau &quot;Wawancara kerja&quot;.
+              </p>
+              <div className="flex gap-sm">
+                <input
+                  type="text"
+                  value={customTopicInput}
+                  onChange={(e) => setCustomTopicInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") startCustomTopic();
+                  }}
+                  placeholder="Contoh: Di rumah sakit"
+                  className="flex-1 px-md py-sm rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+                  autoFocus
+                />
+                <button
+                  onClick={startCustomTopic}
+                  disabled={!customTopicInput.trim()}
+                  className="px-lg py-sm rounded-full bg-primary text-on-primary font-label-md text-label-md hover:bg-primary/80 transition-colors disabled:opacity-50"
+                >
+                  Mulai
+                </button>
+                <button
+                  onClick={() => { setShowCustomInput(false); setCustomTopicInput(""); }}
+                  className="px-md py-sm rounded-full border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Loading Daily Talk */}
+          {loadingDailyTalk && (
+            <div className="text-center max-w-2xl mx-auto">
+              <div className="font-body-md text-body-md text-on-surface-variant">
+                Memuat vocab Daily Talk...
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md max-w-2xl mx-auto">
             {SCENARIOS.map((s) => (
               <button
                 key={s.id}
                 onClick={() => selectScenario(s)}
-                className="flex items-start gap-md p-md rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant transition-colors text-left"
+                disabled={loadingDailyTalk || showCustomInput}
+                className="flex items-start gap-md p-md rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant transition-colors text-left disabled:opacity-50"
               >
                 <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-[24px] text-on-primary-container">
@@ -429,10 +575,10 @@ export default function CallPage() {
             </div>
             <div>
               <div className="font-title-md text-title-md text-on-surface">
-                {scenario.name}
+                {scenario.id === "custom" && customTopic ? `Custom: ${customTopic}` : scenario.name}
               </div>
               <div className="font-body-sm text-body-sm text-on-surface-variant">
-                {scenario.description}
+                {scenario.id === "custom" && customTopic ? customTopic : scenario.description}
               </div>
             </div>
           </div>
@@ -583,7 +729,7 @@ export default function CallPage() {
               </span>
             </div>
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
-              {scenario.name}
+              {scenario.id === "custom" && customTopic ? `Custom: ${customTopic}` : scenario.name}
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant">
               {t("call.score", { score: evaluation.score })}
