@@ -253,19 +253,25 @@ enum DeckKind {
   CUSTOM // deck berisi CustomCard milik user
 }
 
+enum DeckDisplayMode {
+  HANZI_FRONT  // default: front=hanzi, back=pinyin+arti
+  PINYIN_FRONT // speaking: front=pinyin, back=hanzi+arti
+}
+
 enum TargetMode {
   DATE
   RATE
 }
 
 model Deck {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   userId      String
   name        String
   description String?
-  kind        DeckKind @default(CUSTOM)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  kind        DeckKind         @default(CUSTOM)
+  displayMode DeckDisplayMode  @default(HANZI_FRONT)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   deckHskCards   DeckHskCard[] // subset dari Card global (HSK)

@@ -41,6 +41,7 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [displayMode, setDisplayMode] = useState<string>("HANZI_FRONT");
 
   useEffect(() => {
     fetch("/api/review")
@@ -48,10 +49,11 @@ export default function ReviewPage() {
         if (!res.ok) throw new Error(`Gagal memuat kartu review (${res.status})`);
         return res.json();
       })
-      .then((data: { due: ReviewCard[]; new: ReviewCard[] }) => {
+      .then((data: { due: ReviewCard[]; new: ReviewCard[]; displayMode?: string }) => {
         const combined = [...data.due, ...data.new];
         setQueue(combined);
         setTotal(combined.length);
+        if (data.displayMode) setDisplayMode(data.displayMode);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -156,11 +158,11 @@ export default function ReviewPage() {
               className="absolute inset-0 w-full h-full bg-surface-container-lowest border border-unripe-pale rounded-xl flex flex-col items-center justify-center p-lg paper-texture micro-shadow-active card-face-enter"
             >
               <span className="font-headline-hanzi text-[40px] sm:text-[56px] md:text-[64px] text-primary tracking-widest">
-                {current.hanzi}
+                {displayMode === "PINYIN_FRONT" ? numToSymbolPinyin(current.pinyin) : current.hanzi}
               </span>
               <div className="absolute bottom-md text-center w-full">
                 <span className="font-label-caps text-label-caps text-on-surface-variant uppercase opacity-50">
-                  Tap to reveal
+                  {displayMode === "PINYIN_FRONT" ? "Pinyin" : "Tap to reveal"}
                 </span>
               </div>
             </div>
@@ -170,7 +172,10 @@ export default function ReviewPage() {
               className="absolute inset-0 w-full h-full bg-surface-container-lowest border border-unripe-pale rounded-xl paper-texture micro-shadow-active text-center overflow-y-auto card-face-enter"
             >
               <div className="w-full h-full flex flex-col items-center justify-center p-lg">
-                <span className="font-headline-md text-headline-md text-primary mb-xs">{current.hanzi}</span>
+                <span className={displayMode === "PINYIN_FRONT"
+                  ? "font-headline-hanzi text-[48px] sm:text-[64px] md:text-[72px] text-primary tracking-widest mb-xs"
+                  : "font-headline-md text-headline-md text-primary mb-xs"
+                }>{current.hanzi}</span>
                 <button
                   aria-label="Play pronunciation"
                   onClick={(e) => {

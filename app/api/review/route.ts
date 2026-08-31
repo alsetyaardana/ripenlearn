@@ -59,13 +59,15 @@ export async function GET(req: NextRequest) {
   let chunkIds: string[] | null = null;
   let customIds: string[] | null = null;
   const chunkCategory = settings.targetCategory ?? null;
+  let displayMode: string = "HANZI_FRONT";
 
   if (settings.targetDeckId) {
     const deck = await prisma.deck.findUnique({
       where: { id: settings.targetDeckId },
-      select: { id: true, kind: true, userId: true },
+      select: { id: true, kind: true, userId: true, displayMode: true },
     });
     if (deck && deck.userId === userId) {
+      displayMode = deck.displayMode;
       if (deck.kind === "HSK") {
         hskIds = (
           await prisma.deckHskCard.findMany({
@@ -271,6 +273,7 @@ export async function GET(req: NextRequest) {
     due: dueCards,
     new: newCards.slice(0, newLimit),
     newLimit,
+    displayMode,
   });
 }
 
